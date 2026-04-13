@@ -5,6 +5,8 @@
             "destination": "/index.html"
         }
     ],
+    "buildCommand": "npm run build --prefix client",
+    "installCommand": "npm install && npm install --prefix client",
     "outputDirectory": "client/dist",
     "framework": "vite"
 }
