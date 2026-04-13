@@ -1,0 +1,191 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Google Fonts already loaded in index.html ── */
+
+/* ── CSS Variables (Light Mode) ─────────────────────────────── */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #F8F9FC;
+  --bg-tertiary: #F0F2F8;
+  --border: #E2E6F0;
+  --border-2: #C8CED8;
+  --text: #0D1117;
+  --text-2: #4A5568;
+  --text-3: #8B94B0;
+  --accent: #4F8EF7;
+  --accent-2: #3B7AE8;
+  --accent-dim: #EFF5FF;
+  --green: #2ECC8A;
+  --green-dim: #F0FFF8;
+  --purple: #9B6EFF;
+  --purple-dim: #F5F0FF;
+  --red: #FF5C5C;
+  --red-dim: #FFF0F0;
+  --orange: #FF8C42;
+  --orange-dim: #FFF5EE;
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+
+/* ── CSS Variables (Dark Mode) ──────────────────────────────── */
+.dark {
+  --bg-primary: #0D0F14;
+  --bg-secondary: #13161D;
+  --bg-tertiary: #1A1E28;
+  --border: #2A2F40;
+  --border-2: #353C52;
+  --text: #F0F2F8;
+  --text-2: #8B94B0;
+  --text-3: #545E7A;
+  --accent: #4F8EF7;
+  --accent-2: #6FAEFF;
+  --accent-dim: #1A2A4A;
+  --green: #2ECC8A;
+  --green-dim: #0D2E1F;
+  --purple: #9B6EFF;
+  --purple-dim: #1E1535;
+  --red: #FF5C5C;
+  --red-dim: #2A0D0D;
+  --orange: #FF8C42;
+  --orange-dim: #2A1800;
+}
+
+/* ── Base Styles ─────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background-color 0.2s, color 0.2s;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+  font-family: 'Syne', sans-serif;
+}
+
+/* ── Scrollbar (Dark Mode) ───────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-3);
+}
+
+/* ── Utility Classes ─────────────────────────────────────────── */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+
+.card-sm {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--accent-2);
+}
+
+.btn-outline {
+  background: none;
+  color: var(--text-2);
+  border: 1px solid var(--border-2);
+}
+
+.btn-outline:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.btn-danger {
+  background: var(--red-dim);
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+
+.btn-sm {
+  padding: 5px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+/* Plan Badges */
+.badge-free {
+  background: #DCFCE7;
+  color: #166534;
+}
+
+.badge-pro {
+  background: var(--accent-dim);
+  color: var(--accent-2);
+}
+
+.badge-pro-max {
+  background: var(--purple-dim);
+  color: var(--purple);
+}
+
+.dark .badge-free {
+  background: #0D2E1F;
+  color: #2ECC8A;
+}
+
+.dark .badge-pro {
+  background: var(--accent-dim);
+  color: var(--accent-2);
+}
+
+.dark .badge-pro-max {
+  background: var(--purple-dim);
+  color: var(--purple);
+}
