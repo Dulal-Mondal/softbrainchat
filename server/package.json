@@ -13,7 +13,7 @@
         "@langchain/openai": "^1.4.4",
         "@langchain/pinecone": "^1.0.1",
         "@langchain/textsplitters": "^1.0.1",
-        "@pinecone-database/pinecone": "^2.2.2",
+        "@pinecone-database/pinecone": "^5.1.2",
         "axios": "^1.6.8",
         "bcrypt": "^6.0.0",
         "bcryptjs": "^2.4.3",
