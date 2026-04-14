@@ -165,8 +165,10 @@ export default function Register() {
                     {/* Form */}
                     <form onSubmit={handleEmail}>
                         <div style={{ marginBottom: 12 }}>
-                            <label style={labelStyle}>আপনার নাম</label>
+                            <label htmlFor="name" style={labelStyle}>আপনার নাম</label>
                             <input
+                                id="name"
+                                name="name"
                                 className="input"
                                 value={name}
                                 onChange={e => setName(e.target.value)}
@@ -176,8 +178,10 @@ export default function Register() {
                         </div>
 
                         <div style={{ marginBottom: 12 }}>
-                            <label style={labelStyle}>Email</label>
+                            <label htmlFor="email" style={labelStyle}>Email</label>
                             <input
+                                id="email"
+                                name="email"
                                 type="email"
                                 className="input"
                                 value={email}
@@ -188,8 +192,10 @@ export default function Register() {
                         </div>
 
                         <div style={{ marginBottom: 22 }}>
-                            <label style={labelStyle}>Password</label>
+                            <label htmlFor="password" style={labelStyle}>Password</label>
                             <input
+                                id="password"
+                                name="password"
                                 type="password"
                                 className="input"
                                 value={password}
@@ -205,12 +211,7 @@ export default function Register() {
                             style={{ width: '100%', padding: 10, fontSize: 14 }}
                             disabled={loading}
                         >
-                            {loading
-                                ? 'Creating Account...'
-                                : plan === 'free'
-                                    ? 'Free Account তৈরি করুন'
-                                    : `Register করুন — ${plan.toUpperCase()} →`
-                            }
+                            {loading ? 'Creating Account...' : plan === 'free' ? 'Free Account তৈরি করুন' : `Register করুন — ${plan.toUpperCase()} →`}
                         </button>
                     </form>
 

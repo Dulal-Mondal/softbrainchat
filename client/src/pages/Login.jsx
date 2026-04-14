@@ -97,30 +97,44 @@ export default function Login() {
                     {/* Form */}
                     <form onSubmit={handleEmail}>
                         <div style={{ marginBottom: 14 }}>
-                            <label style={labelStyle}>Email</label>
+                            <label
+                                htmlFor="email"
+                                style={{ display: 'block', fontSize: 12, color: 'var(--text-2)', marginBottom: 6, fontWeight: 500 }}
+                            >
+                                Email
+                            </label>
                             <input
+                                id="email"
+                                name="email"
                                 type="email"
-                                className="input"
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
-                                placeholder="you@example.com"
                                 required
+                                placeholder="you@example.com"
+                                style={inputStyle}
                             />
                         </div>
 
-                        <div style={{ marginBottom: 8 }}>
-                            <label style={labelStyle}>Password</label>
+                        <div style={{ marginBottom: 6 }}>
+                            <label
+                                htmlFor="password"
+                                style={{ display: 'block', fontSize: 12, color: 'var(--text-2)', marginBottom: 6, fontWeight: 500 }}
+                            >
+                                Password
+                            </label>
                             <input
+                                id="password"
+                                name="password"
                                 type="password"
-                                className="input"
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
-                                placeholder="••••••••"
                                 required
+                                placeholder="••••••••"
+                                style={inputStyle}
                             />
                         </div>
 
-                        <div style={{ textAlign: 'right', marginBottom: 20 }}>
+                        <div style={{ textAlign: 'right', marginBottom: 18 }}>
                             <Link to="/forgot-password" style={{ fontSize: 12, color: 'var(--accent)' }}>
                                 Password ভুলে গেছেন?
                             </Link>
@@ -128,11 +142,11 @@ export default function Login() {
 
                         <button
                             type="submit"
+                            disabled={loading}
                             className="btn btn-primary"
                             style={{ width: '100%', padding: 10, fontSize: 14 }}
-                            disabled={loading}
                         >
-                            {loading ? 'Loading...' : 'Login করুন'}
+                            {loading ? 'Loading...' : 'Login'}
                         </button>
                     </form>
 
