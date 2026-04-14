@@ -17,7 +17,6 @@ export const registerWithEmail = async (email, password, name) => {
     return cred;
 };
 
-// Redirect এর বদলে Popup ব্যবহার করো
 export const loginWithGoogle = () =>
     signInWithPopup(auth, googleProvider);
 

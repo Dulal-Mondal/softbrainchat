@@ -6,15 +6,17 @@ import api from '../services/api';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-    const [user, setUser] = useState(null);
-    const [fbUser, setFbUser] = useState(null);
+    const [user, setUser] = useState(null);   // MongoDB user object
+    const [fbUser, setFbUser] = useState(null);   // Firebase user object
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
             setFbUser(firebaseUser);
+
             if (firebaseUser) {
                 try {
+                    // Server থেকে full profile নাও (effectivePlan, planLimits সহ)
                     const data = await api.get('/auth/me');
                     setUser(data.user);
                 } catch (err) {
@@ -24,11 +26,14 @@ export function AuthProvider({ children }) {
             } else {
                 setUser(null);
             }
+
             setLoading(false);
         });
+
         return unsub;
     }, []);
 
+    // Plan change বা admin override এর পরে refresh করো
     const refreshUser = async () => {
         try {
             const data = await api.get('/auth/me');
@@ -38,8 +43,17 @@ export function AuthProvider({ children }) {
         }
     };
 
+    const value = {
+        user,
+        fbUser,
+        loading,
+        refreshUser,
+        isAdmin: user?.role === 'admin',
+        isLoggedIn: !!user,
+    };
+
     return (
-        <AuthContext.Provider value={{ user, fbUser, loading, refreshUser, isAdmin: user?.role === 'admin', isLoggedIn: !!user }}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );
