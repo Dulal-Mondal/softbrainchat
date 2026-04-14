@@ -8,5 +8,15 @@
     "buildCommand": "npm run build --prefix client",
     "installCommand": "npm install && npm install --prefix client",
     "outputDirectory": "client/dist",
-    "framework": "vite"
+    "framework": "vite",
+    "routes": [
+        {
+            "src": "/assets/(.*)",
+            "dest": "/assets/$1"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/index.html"
+        }
+    ]
 }
