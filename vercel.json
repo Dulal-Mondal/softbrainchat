@@ -1,22 +1,23 @@
 {
-    "rewrites": [
-        {
-            "source": "/(.*)",
-            "destination": "/index.html"
-        }
-    ],
     "buildCommand": "npm run build --prefix client",
     "installCommand": "npm install && npm install --prefix client",
     "outputDirectory": "client/dist",
     "framework": "vite",
-    "routes": [
+    "headers": [
         {
-            "src": "/assets/(.*)",
-            "dest": "/assets/$1"
-        },
+            "source": "/(.*)",
+            "headers": [
+                {
+                    "key": "Cross-Origin-Opener-Policy",
+                    "value": "same-origin-allow-popups"
+                }
+            ]
+        }
+    ],
+    "rewrites": [
         {
-            "src": "/(.*)",
-            "dest": "/index.html"
+            "source": "/(.*)",
+            "destination": "/index.html"
         }
     ]
 }
