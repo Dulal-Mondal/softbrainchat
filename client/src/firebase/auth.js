@@ -1,7 +1,8 @@
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
     signOut,
     sendPasswordResetEmail,
     updateProfile,
@@ -18,7 +19,10 @@ export const registerWithEmail = async (email, password, name) => {
 };
 
 export const loginWithGoogle = () =>
-    signInWithPopup(auth, googleProvider);
+    signInWithRedirect(auth, googleProvider);
+
+export const handleRedirectResult = () =>
+    getRedirectResult(auth);
 
 export const logout = () => signOut(auth);
 
