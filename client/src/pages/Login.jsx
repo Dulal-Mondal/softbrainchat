@@ -99,7 +99,7 @@ export default function Login() {
                         <div style={{ marginBottom: 14 }}>
                             <label
                                 htmlFor="email"
-                                style={{ display: 'block', fontSize: 12, color: 'var(--text-2)', marginBottom: 6, fontWeight: 500 }}
+                                style={labelStyle}
                             >
                                 Email
                             </label>
@@ -111,14 +111,14 @@ export default function Login() {
                                 onChange={e => setEmail(e.target.value)}
                                 required
                                 placeholder="you@example.com"
-                                style={inputStyle}
+                                className="input"
                             />
                         </div>
 
                         <div style={{ marginBottom: 6 }}>
                             <label
                                 htmlFor="password"
-                                style={{ display: 'block', fontSize: 12, color: 'var(--text-2)', marginBottom: 6, fontWeight: 500 }}
+                                style={labelStyle}
                             >
                                 Password
                             </label>
@@ -130,7 +130,7 @@ export default function Login() {
                                 onChange={e => setPassword(e.target.value)}
                                 required
                                 placeholder="••••••••"
-                                style={inputStyle}
+                                className="input"
                             />
                         </div>
 
@@ -166,7 +166,7 @@ const labelStyle = {
     display: 'block',
     fontSize: 12,
     color: 'var(--text-2)',
-    marginBottom: 5,
+    marginBottom: 6,
     fontWeight: 500,
 };
 
