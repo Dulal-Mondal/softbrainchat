@@ -1,8 +1,7 @@
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    signInWithRedirect,
-    getRedirectResult,
+    signInWithPopup,
     signOut,
     sendPasswordResetEmail,
     updateProfile,
@@ -18,11 +17,9 @@ export const registerWithEmail = async (email, password, name) => {
     return cred;
 };
 
+// Redirect এর বদলে Popup ব্যবহার করো
 export const loginWithGoogle = () =>
-    signInWithRedirect(auth, googleProvider);
-
-export const handleRedirectResult = () =>
-    getRedirectResult(auth);
+    signInWithPopup(auth, googleProvider);
 
 export const logout = () => signOut(auth);
 
