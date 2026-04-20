@@ -246,7 +246,7 @@ export default function Landing() {
                 color: 'var(--text-3)',
                 background: 'var(--bg-primary)',
             }}>
-                © 2025 SoftBrainChat — All rights reserved.
+                © 2026 SoftBrainChat — All rights reserved.
             </footer>
         </div>
     );
