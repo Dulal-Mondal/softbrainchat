@@ -137,6 +137,10 @@ export default function Landing() {
                     <Link to="/login" className="btn btn-outline" style={{ padding: '12px 28px', fontSize: 15 }}>
                         Login
                     </Link>
+
+                    <Link to="/privacy-policy" className="btn btn-outline" style={{ padding: '12px 28px', fontSize: 15 }}>
+                        Privacy-policy
+                    </Link>
                 </div>
             </section>
 
