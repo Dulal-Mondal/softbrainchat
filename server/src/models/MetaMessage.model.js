@@ -58,44 +58,96 @@
 
 
 
+// const mongoose = require('mongoose');
+
+// const MetaMessageSchema = new mongoose.Schema({
+//     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+//     channelId: { type: mongoose.Schema.Types.ObjectId, ref: 'MetaChannel', required: true },
+//     platform: {
+//         type: String,
+//         enum: ['whatsapp', 'messenger', 'instagram'],
+//         required: true,
+//     },
+//     senderId: { type: String, required: true },
+//     senderName: { type: String, default: 'Customer' },
+//     customerMessage: { type: String, required: true },
+//     aiReply: { type: String },
+//     humanReply: { type: String },
+//     finalReply: { type: String },
+//     status: {
+//         type: String,
+//         enum: ['pending', 'ai_replied', 'review_needed', 'human_replied', 'failed'],
+//         default: 'pending',
+//     },
+//     aiConfident: { type: Boolean, default: true },
+//     sources: [{
+//         file: { type: String },
+//         url: { type: String },
+//         excerpt: { type: String },
+//     }],
+//     // ✅ unique: true থাকলে index automatic — নিচে আর দিতে হবে না
+//     metaMessageId: { type: String, unique: true, sparse: true },
+//     replySent: { type: Boolean, default: false },
+//     repliedAt: { type: Date },
+// }, {
+//     timestamps: true,
+// });
+
+// MetaMessageSchema.index({ userId: 1, createdAt: -1 });
+// MetaMessageSchema.index({ channelId: 1 });
+// MetaMessageSchema.index({ status: 1 });
+// // ✅ metaMessageId index সরানো — unique: true এ automatic
+
+// module.exports = mongoose.model('MetaMessage', MetaMessageSchema);
+
+
 const mongoose = require('mongoose');
 
 const MetaMessageSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     channelId: { type: mongoose.Schema.Types.ObjectId, ref: 'MetaChannel', required: true },
+
     platform: {
         type: String,
         enum: ['whatsapp', 'messenger', 'instagram'],
         required: true,
     },
+
+    // Customer info
     senderId: { type: String, required: true },
     senderName: { type: String, default: 'Customer' },
-    customerMessage: { type: String, required: true },
+
+    // Message type — text or image
+    messageType: {
+        type: String,
+        enum: ['text', 'image'],
+        default: 'text',
+    },
+
+    // Message content
+    customerMessage: { type: String, required: true },  // text or '[Image sent]'
     aiReply: { type: String },
     humanReply: { type: String },
     finalReply: { type: String },
+
+    // Status flow
     status: {
         type: String,
         enum: ['pending', 'ai_replied', 'review_needed', 'human_replied', 'failed'],
         default: 'pending',
     },
+
     aiConfident: { type: Boolean, default: true },
-    sources: [{
-        file: { type: String },
-        url: { type: String },
-        excerpt: { type: String },
-    }],
-    // ✅ unique: true থাকলে index automatic — নিচে আর দিতে হবে না
+    sources: [{ file: String, url: String, excerpt: String }],
     metaMessageId: { type: String, unique: true, sparse: true },
     replySent: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now },
     repliedAt: { type: Date },
-}, {
-    timestamps: true,
 });
 
 MetaMessageSchema.index({ userId: 1, createdAt: -1 });
 MetaMessageSchema.index({ channelId: 1 });
 MetaMessageSchema.index({ status: 1 });
-// ✅ metaMessageId index সরানো — unique: true এ automatic
+MetaMessageSchema.index({ metaMessageId: 1 });
 
 module.exports = mongoose.model('MetaMessage', MetaMessageSchema);
