@@ -13,7 +13,8 @@ export default function ReviewModal({ message, onClose, onSuccess }) {
         setLoading(true);
         try {
             await metaService.humanReply(message._id, reply);
-            toast.success('Reply sent!');
+
+            toast.success(`Reply sent by ${user?.name}`);
             onSuccess?.();
             onClose();
         } catch (err) {
@@ -103,6 +104,7 @@ export default function ReviewModal({ message, onClose, onSuccess }) {
                     </button>
                 </div>
             </div>
+
         </div>
     );
 }

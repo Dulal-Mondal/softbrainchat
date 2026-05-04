@@ -13,5 +13,6 @@ router.patch('/users/:userId/plan-override', adminCtrl.setPlanOverride);
 router.patch('/users/:userId/plan-override/remove', adminCtrl.removePlanOverride);
 router.patch('/users/:userId/role', adminCtrl.updateRole);
 router.delete('/users/:userId', adminCtrl.deleteUser);
+router.get('/reply-stats', adminCtrl.getReplyStats);
 
 module.exports = router;

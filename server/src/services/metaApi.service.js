@@ -313,4 +313,37 @@ const extractMessage = (body, platform) => {
     }
 };
 
-module.exports = { sendReply, verifyWebhook, extractMessage };
+
+// ── Customer এর Facebook profile info নাও ────────────────────
+const getSenderProfile = async ({ platform, senderId, accessToken }) => {
+    try {
+        if (platform === 'messenger' || platform === 'instagram') {
+            const res = await axios.get(
+                `https://graph.facebook.com/v19.0/${senderId}`,
+                {
+                    params: {
+                        fields: 'name,profile_pic',
+                        access_token: accessToken,
+                    },
+                }
+            );
+            return {
+                name: res.data.name || 'Customer',
+                profilePic: res.data.profile_pic || '',
+            };
+        }
+
+        if (platform === 'whatsapp') {
+            // WhatsApp Business API তে profile pic সরাসরি পাওয়া যায় না
+            // শুধু contact নাম পাওয়া যায় webhook payload থেকে
+            return { name: 'WhatsApp Customer', profilePic: '' };
+        }
+
+        return { name: 'Customer', profilePic: '' };
+    } catch (err) {
+        console.warn('Profile fetch failed:', err.message);
+        return { name: 'Customer', profilePic: '' };
+    }
+};
+
+module.exports = { sendReply, verifyWebhook, extractMessage, getSenderProfile };

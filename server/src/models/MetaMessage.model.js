@@ -103,38 +103,78 @@
 
 const mongoose = require('mongoose');
 
+// const MetaMessageSchema = new mongoose.Schema({
+//     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+//     channelId: { type: mongoose.Schema.Types.ObjectId, ref: 'MetaChannel', required: true },
+
+//     platform: {
+//         type: String,
+//         enum: ['whatsapp', 'messenger', 'instagram'],
+//         required: true,
+//     },
+
+//     // Customer info
+//     senderId: { type: String, required: true },
+//     senderName: { type: String, default: 'Customer' },
+
+//     // Message type — text or image
+//     messageType: {
+//         type: String,
+//         enum: ['text', 'image'],
+//         default: 'text',
+//     },
+
+//     // Message content
+//     customerMessage: { type: String, required: true },  // text or '[Image sent]'
+//     aiReply: { type: String },
+//     humanReply: { type: String },
+//     finalReply: { type: String },
+
+//     // Status flow
+//     status: {
+//         type: String,
+//         enum: ['pending', 'ai_replied', 'review_needed', 'human_replied', 'failed'],
+//         default: 'pending',
+//     },
+
+//     aiConfident: { type: Boolean, default: true },
+//     sources: [{ file: String, url: String, excerpt: String }],
+//     metaMessageId: { type: String, unique: true, sparse: true },
+//     replySent: { type: Boolean, default: false },
+//     createdAt: { type: Date, default: Date.now },
+//     repliedAt: { type: Date },
+// });
+
+
 const MetaMessageSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     channelId: { type: mongoose.Schema.Types.ObjectId, ref: 'MetaChannel', required: true },
+    platform: { type: String, enum: ['whatsapp', 'messenger', 'instagram'], required: true },
 
-    platform: {
-        type: String,
-        enum: ['whatsapp', 'messenger', 'instagram'],
-        required: true,
-    },
-
-    // Customer info
+    // Customer info — profile pic সহ
     senderId: { type: String, required: true },
     senderName: { type: String, default: 'Customer' },
+    senderProfilePic: { type: String, default: '' },  // ← নতুন
 
-    // Message type — text or image
-    messageType: {
-        type: String,
-        enum: ['text', 'image'],
-        default: 'text',
-    },
-
-    // Message content
-    customerMessage: { type: String, required: true },  // text or '[Image sent]'
+    messageType: { type: String, enum: ['text', 'image'], default: 'text' },
+    customerMessage: { type: String, required: true },
     aiReply: { type: String },
     humanReply: { type: String },
     finalReply: { type: String },
 
-    // Status flow
     status: {
         type: String,
         enum: ['pending', 'ai_replied', 'review_needed', 'human_replied', 'failed'],
         default: 'pending',
+    },
+
+    // Human reply করেছে কে — ← নতুন section
+    humanRepliedBy: {
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        name: { type: String },
+        email: { type: String },
+        photo: { type: String },   // profile pic
+        repliedAt: { type: Date },
     },
 
     aiConfident: { type: Boolean, default: true },
@@ -144,7 +184,6 @@ const MetaMessageSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
     repliedAt: { type: Date },
 });
-
 MetaMessageSchema.index({ userId: 1, createdAt: -1 });
 MetaMessageSchema.index({ channelId: 1 });
 MetaMessageSchema.index({ status: 1 });

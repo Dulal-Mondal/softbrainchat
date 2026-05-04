@@ -172,4 +172,33 @@ exports.deleteUser = async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
-};  
+};
+
+
+// GET /api/admin/reply-stats — কে কতটা reply দিয়েছে
+exports.getReplyStats = async (req, res) => {
+    try {
+        const MetaMessage = require('../models/MetaMessage.model');
+
+        const stats = await MetaMessage.aggregate([
+            // শুধু human replied messages
+            { $match: { userId: req.user._id, status: 'human_replied' } },
+            // replier অনুযায়ী group করো
+            {
+                $group: {
+                    _id: '$humanRepliedBy.userId',
+                    name: { $first: '$humanRepliedBy.name' },
+                    email: { $first: '$humanRepliedBy.email' },
+                    photo: { $first: '$humanRepliedBy.photo' },
+                    replyCount: { $sum: 1 },
+                    lastReplied: { $max: '$humanRepliedBy.repliedAt' },
+                },
+            },
+            { $sort: { replyCount: -1 } },
+        ]);
+
+        res.json({ success: true, stats });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
