@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePlan } from '../context/PlanContext';
+import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
     const { user } = useAuth();
@@ -60,6 +61,11 @@ export default function Dashboard() {
                     </div>
                 </div>
             )}
+
+
+            <Link to="/orders" style={{ ... }}>
+                📦 Orders
+            </Link>
 
             {/* Quick access cards */}
             <h2 style={{ fontFamily: 'Syne', fontSize: 16, fontWeight: 600, marginBottom: 14 }}>

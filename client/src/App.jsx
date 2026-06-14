@@ -162,6 +162,8 @@ const MetaIntegration = lazy(() => import('./pages/MetaIntegration'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Billing = lazy(() => import('./pages/Billing'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
+const Orders = lazy(() => import('./pages/Orders'));
+const ApiDocs = lazy(() => import('./pages/ApiDocs'));
 
 function PageLoader() {
   return (
@@ -197,6 +199,7 @@ export default function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/api-docs" element={<ApiDocs />} />
 
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
@@ -206,6 +209,7 @@ export default function App() {
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/billing" element={<Billing />} />
                   <Route path="/admin" element={<AdminPanel />} />
+                  <Route path="/orders" element={<Orders />} />
                 </Route>
 
                 {/* 404 */}
