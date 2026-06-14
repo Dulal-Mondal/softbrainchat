@@ -597,135 +597,135 @@
 
 
 
-const MetaChannel = require('../models/MetaChannel.model');
-const MetaMessage = require('../models/MetaMessage.model');
-const { sendReply, verifyWebhook, extractMessage, getSenderProfile } = require('../services/metaApi.service');
-const { sendMessage: ragSend } = require('../services/langchain.service');
-const { searchSimilar } = require('../services/vectorStore.service');
-const {
-    downloadMetaImage,
-    analyzeProductImage,
-    getWhatsAppImageUrl,
-} = require('../services/vision.service');
+// const MetaChannel = require('../models/MetaChannel.model');
+// const MetaMessage = require('../models/MetaMessage.model');
+// const { sendReply, verifyWebhook, extractMessage, getSenderProfile } = require('../services/metaApi.service');
+// const { sendMessage: ragSend } = require('../services/langchain.service');
+// const { searchSimilar } = require('../services/vectorStore.service');
+// const {
+//     downloadMetaImage,
+//     analyzeProductImage,
+//     getWhatsAppImageUrl,
+// } = require('../services/vision.service');
 
-// ── GET /api/meta/channels ────────────────────────────────────
-exports.getChannels = async (req, res) => {
-    try {
-        const channels = await MetaChannel.find({ userId: req.user._id }).sort({ createdAt: -1 });
-        const safe = channels.map(c => ({
-            _id: c._id,
-            platform: c.platform,
-            name: c.name,
-            pageId: c.pageId,
-            phoneNumberId: c.phoneNumberId,
-            autoReplyEnabled: c.autoReplyEnabled,
-            model: c.model,
-            ragEnabled: c.ragEnabled,
-            webhookVerifyToken: c.webhookVerifyToken,
-            stats: c.stats,
-            isActive: c.isActive,
-            createdAt: c.createdAt,
-        }));
-        res.json({ success: true, channels: safe });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
+// // ── GET /api/meta/channels ────────────────────────────────────
+// exports.getChannels = async (req, res) => {
+//     try {
+//         const channels = await MetaChannel.find({ userId: req.user._id }).sort({ createdAt: -1 });
+//         const safe = channels.map(c => ({
+//             _id: c._id,
+//             platform: c.platform,
+//             name: c.name,
+//             pageId: c.pageId,
+//             phoneNumberId: c.phoneNumberId,
+//             autoReplyEnabled: c.autoReplyEnabled,
+//             model: c.model,
+//             ragEnabled: c.ragEnabled,
+//             webhookVerifyToken: c.webhookVerifyToken,
+//             stats: c.stats,
+//             isActive: c.isActive,
+//             createdAt: c.createdAt,
+//         }));
+//         res.json({ success: true, channels: safe });
+//     } catch (err) {
+//         res.status(500).json({ message: err.message });
+//     }
+// };
 
-// ── POST /api/meta/channels ───────────────────────────────────
-exports.addChannel = async (req, res) => {
-    try {
-        const {
-            platform, name, appId, appSecret, accessToken,
-            pageId, phoneNumberId, wabaId, model, ragEnabled,
-        } = req.body;
+// // ── POST /api/meta/channels ───────────────────────────────────
+// exports.addChannel = async (req, res) => {
+//     try {
+//         const {
+//             platform, name, appId, appSecret, accessToken,
+//             pageId, phoneNumberId, wabaId, model, ragEnabled,
+//         } = req.body;
 
-        if (!platform || !name || !appId || !appSecret || !accessToken) {
-            return res.status(400).json({ message: 'platform, name, appId, appSecret, accessToken required' });
-        }
+//         if (!platform || !name || !appId || !appSecret || !accessToken) {
+//             return res.status(400).json({ message: 'platform, name, appId, appSecret, accessToken required' });
+//         }
 
-        const existing = await MetaChannel.countDocuments({ userId: req.user._id, isActive: true });
-        const limit = req.user.planLimits.metaChannels;
-        if (limit !== Infinity && existing >= limit) {
-            return res.status(403).json({
-                message: `Plan limit: সর্বোচ্চ ${limit}টি Meta channel add করা যাবে`,
-                upgrade: true,
-            });
-        }
+//         const existing = await MetaChannel.countDocuments({ userId: req.user._id, isActive: true });
+//         const limit = req.user.planLimits.metaChannels;
+//         if (limit !== Infinity && existing >= limit) {
+//             return res.status(403).json({
+//                 message: `Plan limit: সর্বোচ্চ ${limit}টি Meta channel add করা যাবে`,
+//                 upgrade: true,
+//             });
+//         }
 
-        const channel = await MetaChannel.create({
-            userId: req.user._id,
-            platform, name, appId, appSecret, accessToken,
-            pageId, phoneNumberId, wabaId,
-            model: model || 'gpt-4o',
-            ragEnabled: ragEnabled ?? true,
-        });
+//         const channel = await MetaChannel.create({
+//             userId: req.user._id,
+//             platform, name, appId, appSecret, accessToken,
+//             pageId, phoneNumberId, wabaId,
+//             model: model || 'gpt-4o',
+//             ragEnabled: ragEnabled ?? true,
+//         });
 
-        const baseUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
-        res.status(201).json({
-            success: true,
-            channel: {
-                _id: channel._id,
-                platform: channel.platform,
-                name: channel.name,
-                webhookVerifyToken: channel.webhookVerifyToken,
-                webhookUrl: `${baseUrl}/webhook/meta/${channel._id}`,
-            },
-        });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
+//         const baseUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
+//         res.status(201).json({
+//             success: true,
+//             channel: {
+//                 _id: channel._id,
+//                 platform: channel.platform,
+//                 name: channel.name,
+//                 webhookVerifyToken: channel.webhookVerifyToken,
+//                 webhookUrl: `${baseUrl}/webhook/meta/${channel._id}`,
+//             },
+//         });
+//     } catch (err) {
+//         res.status(500).json({ message: err.message });
+//     }
+// };
 
-// ── PATCH /api/meta/channels/:channelId ──────────────────────
-exports.updateChannel = async (req, res) => {
-    try {
-        const { autoReplyEnabled, model, ragEnabled, name } = req.body;
-        const channel = await MetaChannel.findOne({ _id: req.params.channelId, userId: req.user._id });
-        if (!channel) return res.status(404).json({ message: 'Channel not found' });
+// // ── PATCH /api/meta/channels/:channelId ──────────────────────
+// exports.updateChannel = async (req, res) => {
+//     try {
+//         const { autoReplyEnabled, model, ragEnabled, name } = req.body;
+//         const channel = await MetaChannel.findOne({ _id: req.params.channelId, userId: req.user._id });
+//         if (!channel) return res.status(404).json({ message: 'Channel not found' });
 
-        if (name !== undefined) channel.name = name;
-        if (autoReplyEnabled !== undefined) channel.autoReplyEnabled = autoReplyEnabled;
-        if (model !== undefined) channel.model = model;
-        if (ragEnabled !== undefined) channel.ragEnabled = ragEnabled;
+//         if (name !== undefined) channel.name = name;
+//         if (autoReplyEnabled !== undefined) channel.autoReplyEnabled = autoReplyEnabled;
+//         if (model !== undefined) channel.model = model;
+//         if (ragEnabled !== undefined) channel.ragEnabled = ragEnabled;
 
-        await channel.save();
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
+//         await channel.save();
+//         res.json({ success: true });
+//     } catch (err) {
+//         res.status(500).json({ message: err.message });
+//     }
+// };
 
-// ── DELETE /api/meta/channels/:channelId ─────────────────────
-exports.deleteChannel = async (req, res) => {
-    try {
-        await MetaChannel.deleteOne({ _id: req.params.channelId, userId: req.user._id });
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
+// // ── DELETE /api/meta/channels/:channelId ─────────────────────
+// exports.deleteChannel = async (req, res) => {
+//     try {
+//         await MetaChannel.deleteOne({ _id: req.params.channelId, userId: req.user._id });
+//         res.json({ success: true });
+//     } catch (err) {
+//         res.status(500).json({ message: err.message });
+//     }
+// };
 
-// ── GET /api/meta/messages ────────────────────────────────────
-exports.getMessages = async (req, res) => {
-    try {
-        const { status, platform, page = 1 } = req.query;
-        const filter = { userId: req.user._id };
-        if (status) filter.status = status;
-        if (platform) filter.platform = platform;
+// // ── GET /api/meta/messages ────────────────────────────────────
+// exports.getMessages = async (req, res) => {
+//     try {
+//         const { status, platform, page = 1 } = req.query;
+//         const filter = { userId: req.user._id };
+//         if (status) filter.status = status;
+//         if (platform) filter.platform = platform;
 
-        const messages = await MetaMessage.find(filter)
-            .sort({ createdAt: -1 })
-            .limit(50)
-            .skip((Number(page) - 1) * 50)
-            .populate('channelId', 'name platform');
+//         const messages = await MetaMessage.find(filter)
+//             .sort({ createdAt: -1 })
+//             .limit(50)
+//             .skip((Number(page) - 1) * 50)
+//             .populate('channelId', 'name platform');
 
-        const total = await MetaMessage.countDocuments(filter);
-        res.json({ success: true, messages, total });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
+//         const total = await MetaMessage.countDocuments(filter);
+//         res.json({ success: true, messages, total });
+//     } catch (err) {
+//         res.status(500).json({ message: err.message });
+//     }
+// };
 
 // ── PATCH /api/meta/messages/:msgId/reply ────────────────────
 // exports.humanReply = async (req, res) => {
