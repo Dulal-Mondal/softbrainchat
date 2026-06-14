@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePlan } from '../context/PlanContext';
-import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
     const { user } = useAuth();
@@ -10,6 +9,7 @@ export default function Dashboard() {
     const cards = [
         { icon: '💬', label: 'AI Chat', sub: 'RAG-powered', link: '/chat' },
         { icon: '📲', label: 'Meta Auto-Reply', sub: 'WhatsApp/IG/FB', link: '/meta' },
+        { icon: '📦', label: 'Orders', sub: 'OMS & tracking', link: '/orders' },
         { icon: '⚙️', label: 'Settings', sub: 'Model & KB', link: '/settings' },
         { icon: '💳', label: 'Billing', sub: 'Plan & payment', link: '/billing' },
     ];
@@ -33,7 +33,6 @@ export default function Dashboard() {
                 </p>
             </div>
 
-            {/* Usage stats */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 28 }}>
                 {[
                     { val: usage.messagesThisMonth || 0, lbl: 'Messages This Month' },
@@ -50,7 +49,6 @@ export default function Dashboard() {
                 ))}
             </div>
 
-            {/* Usage bar */}
             {limits.messagesPerMonth !== Infinity && (
                 <div style={{ marginBottom: 28 }}>
                     <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 6 }}>
@@ -62,16 +60,10 @@ export default function Dashboard() {
                 </div>
             )}
 
-
-            <Link to="/orders" style={{ ... }}>
-                📦 Orders
-            </Link>
-
-            {/* Quick access cards */}
             <h2 style={{ fontFamily: 'Syne', fontSize: 16, fontWeight: 600, marginBottom: 14 }}>
                 Quick Access
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14 }}>
                 {cards.map((c, i) => (
                     <Link
                         key={i}
