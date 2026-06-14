@@ -23,7 +23,7 @@ export default function Dashboard() {
 
             <div style={{ marginBottom: 28 }}>
                 <h1 style={{ fontFamily: 'Syne', fontSize: 24, fontWeight: 700 }}>
-                    স্বাগতম, {user?.name || 'User'}! 👋
+                    Welcome, {user?.name || 'User'}!
                 </h1>
                 <p style={{ color: 'var(--text-2)', fontSize: 13, marginTop: 4 }}>
                     SoftBrainChat Dashboard ·{' '}

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
+import OmsConfigPanel from '../components/orders/OmsConfigPanel';
 
 const STATUS_STYLE = {
     pending: { bg: 'var(--orange-dim)', color: 'var(--orange)', label: '⏳ Pending' },
@@ -24,7 +25,7 @@ export default function Orders() {
     const [apiKeys, setApiKeys] = useState([]);
     const [tab, setTab] = useState('orders');
     const [newKeyName, setNewKeyName] = useState('');
-    const [newKey, setNewKey] = useState(null);  // newly created key (show once)
+    const [newKey, setNewKey] = useState(null);
 
     const loadOrders = useCallback(async () => {
         setLoading(true);
@@ -33,8 +34,8 @@ export default function Orders() {
             if (statusFilter) params.status = statusFilter;
             if (search) params.search = search;
             const data = await api.get('/orders', { params });
-            setOrders(data.orders);
-            setTotal(data.total);
+            setOrders(data.orders || []);
+            setTotal(data.total || 0);
             setStats(data.stats || {});
         } catch (err) {
             toast.error(err.message);
@@ -46,7 +47,7 @@ export default function Orders() {
     const loadApiKeys = useCallback(async () => {
         try {
             const data = await api.get('/orders/api-keys');
-            setApiKeys(data.keys);
+            setApiKeys(data.keys || []);
         } catch { }
     }, []);
 
@@ -108,7 +109,7 @@ export default function Orders() {
                 <div>
                     <h1 style={{ fontFamily: 'Syne', fontSize: 22, fontWeight: 700 }}>📦 Orders</h1>
                     <p style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 4 }}>
-                        Meta chat থেকে আসা orders এবং OMS API management
+                        Meta chat থেকে আসা orders এবং OMS management
                     </p>
                 </div>
                 <Link to="/dashboard" className="btn btn-outline btn-sm">← Dashboard</Link>
@@ -117,8 +118,9 @@ export default function Orders() {
             {/* Stats */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 10, marginBottom: 24 }}>
                 {Object.entries(STATUS_STYLE).map(([key, s]) => (
-                    <div key={key} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', textAlign: 'center', cursor: 'pointer', transition: 'border .15s', ...(statusFilter === key && { borderColor: s.color }) }}
-                        onClick={() => setStatusFilter(prev => prev === key ? '' : key)}>
+                    <div key={key}
+                        onClick={() => setStatusFilter(prev => prev === key ? '' : key)}
+                        style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', textAlign: 'center', cursor: 'pointer', transition: 'border .15s', ...(statusFilter === key && { borderColor: s.color }) }}>
                         <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'Syne', color: s.color }}>{stats[key] || 0}</div>
                         <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3 }}>{s.label}</div>
                     </div>
@@ -129,12 +131,13 @@ export default function Orders() {
             <div style={{ display: 'flex', gap: 4, marginBottom: 20 }}>
                 {[
                     { id: 'orders', label: `📋 Orders (${total})` },
+                    { id: 'oms', label: '🔗 OMS Integration' },
                     { id: 'apikeys', label: '🔑 OMS API Keys' },
                 ].map(t => (
                     <button key={t.id} onClick={() => setTab(t.id)} style={{
                         padding: '7px 18px', borderRadius: 8, fontSize: 13, cursor: 'pointer',
                         border: 'none', fontFamily: "'DM Sans', sans-serif", fontWeight: 500,
-                        background: tab === t.id ? 'var(--accent-dim)' : 'none',
+                        background: tab === t.id ? 'var(--accent-dim)' : 'transparent',
                         color: tab === t.id ? 'var(--accent-2)' : 'var(--text-2)',
                     }}>
                         {t.label}
@@ -158,7 +161,7 @@ export default function Orders() {
                     </div>
 
                     {/* Table */}
-                    <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+                    <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
                                 <tr>
@@ -187,19 +190,16 @@ export default function Orders() {
                                             onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-tertiary)'}
                                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
 
-                                            {/* Order ID */}
                                             <td style={td}>
                                                 <div style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: 'var(--accent-2)' }}>{order.orderId}</div>
                                             </td>
 
-                                            {/* Customer */}
                                             <td style={td}>
                                                 <div style={{ fontWeight: 500 }}>{order.customer?.name}</div>
                                                 <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{order.customer?.phone}</div>
                                                 <div style={{ fontSize: 11, color: 'var(--text-3)', maxWidth: 160, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{order.customer?.address}</div>
                                             </td>
 
-                                            {/* Product */}
                                             <td style={td}>
                                                 <div style={{ fontWeight: 500 }}>{order.product?.name}</div>
                                                 <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
@@ -208,12 +208,10 @@ export default function Orders() {
                                                 </div>
                                             </td>
 
-                                            {/* Platform */}
                                             <td style={{ ...td, textAlign: 'center', fontSize: 18 }}>
                                                 {PLATFORM_ICON[order.platform] || '📱'}
                                             </td>
 
-                                            {/* Status */}
                                             <td style={td}>
                                                 <select
                                                     value={order.status}
@@ -229,7 +227,6 @@ export default function Orders() {
                                                 </select>
                                             </td>
 
-                                            {/* OMS Sync */}
                                             <td style={{ ...td, textAlign: 'center' }}>
                                                 {order.omsSynced ? (
                                                     <span style={{ fontSize: 11, color: 'var(--green)' }}>✓ Synced</span>
@@ -240,12 +237,10 @@ export default function Orders() {
                                                 )}
                                             </td>
 
-                                            {/* Date */}
                                             <td style={{ ...td, fontSize: 11, color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
                                                 {new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                             </td>
 
-                                            {/* Actions */}
                                             <td style={td}>
                                                 <button className="btn btn-danger btn-sm" style={{ fontSize: 11 }} onClick={() => deleteOrder(order.orderId)}>
                                                     Delete
@@ -260,11 +255,17 @@ export default function Orders() {
                 </>
             )}
 
+            {/* ── OMS INTEGRATION TAB ────────────────────────────────── */}
+            {tab === 'oms' && (
+                <div style={{ maxWidth: 700, background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
+                    <OmsConfigPanel />
+                </div>
+            )}
+
             {/* ── API KEYS TAB ──────────────────────────────────────── */}
             {tab === 'apikeys' && (
                 <div style={{ maxWidth: 700 }}>
 
-                    {/* New key created alert */}
                     {newKey && (
                         <div style={{ background: 'var(--green-dim)', border: '1px solid var(--green)', borderRadius: 10, padding: '14px 18px', marginBottom: 20 }}>
                             <div style={{ fontSize: 13, color: 'var(--green)', fontWeight: 600, marginBottom: 8 }}>
@@ -282,16 +283,15 @@ export default function Orders() {
                         </div>
                     )}
 
-                    {/* How to use */}
                     <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, marginBottom: 20 }}>
                         <h3 style={{ fontFamily: 'Syne', fontSize: 15, fontWeight: 600, marginBottom: 12 }}>📖 OMS API কিভাবে ব্যবহার করবেন</h3>
-                        <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.8 }}>
-                            <strong>Base URL:</strong>
-                            <code style={{ marginLeft: 8, background: 'var(--bg-tertiary)', padding: '2px 8px', borderRadius: 4 }}>
-                                {window.location.origin.replace('3000', '5000')}/api/v1
+                        <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 8 }}>
+                            <strong>Base URL:</strong>{' '}
+                            <code style={{ background: 'var(--bg-tertiary)', padding: '2px 8px', borderRadius: 4 }}>
+                                {window.location.origin}/api/v1
                             </code>
                         </div>
-                        <div style={{ marginTop: 12, fontSize: 12 }}>
+                        <div style={{ fontSize: 12 }}>
                             {[
                                 { method: 'GET', path: '/orders', desc: 'সব pending orders নিয়ে আসো' },
                                 { method: 'GET', path: '/orders/:order_id', desc: 'Single order details' },
@@ -309,9 +309,11 @@ export default function Orders() {
                             <strong>Header:</strong>{' '}
                             <code style={{ background: 'var(--bg-tertiary)', padding: '2px 8px', borderRadius: 4 }}>X-API-Key: sbc_your_key_here</code>
                         </div>
+                        <Link to="/api-docs" className="btn btn-outline btn-sm" style={{ marginTop: 14, display: 'inline-block' }}>
+                            📚 Full API Documentation →
+                        </Link>
                     </div>
 
-                    {/* Create new key */}
                     <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, marginBottom: 20 }}>
                         <h3 style={{ fontFamily: 'Syne', fontSize: 15, fontWeight: 600, marginBottom: 14 }}>➕ নতুন API Key তৈরি করুন</h3>
                         <form onSubmit={createApiKey} style={{ display: 'flex', gap: 10 }}>
@@ -322,7 +324,6 @@ export default function Orders() {
                         </form>
                     </div>
 
-                    {/* Existing keys */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         {apiKeys.map(k => (
                             <div key={k._id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10 }}>
