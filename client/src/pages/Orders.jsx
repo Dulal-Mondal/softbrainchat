@@ -107,9 +107,9 @@ export default function Orders() {
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
                 <div>
-                    <h1 style={{ fontFamily: 'Syne', fontSize: 22, fontWeight: 700 }}>📦 Orders</h1>
+                    <h1 className="stat-number" style={{ fontSize: 22, fontWeight: 700 }}>📦 Orders</h1>
                     <p style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 4 }}>
-                        Meta chat থেকে আসা orders এবং OMS management
+                        Orders and OMS management from Meta chat
                     </p>
                 </div>
                 <Link to="/dashboard" className="btn btn-outline btn-sm">← Dashboard</Link>
@@ -181,7 +181,7 @@ export default function Orders() {
                                 ) : orders.length === 0 ? (
                                     <tr><td colSpan={8} style={{ ...td, textAlign: 'center', color: 'var(--text-3)', padding: 40 }}>
                                         <div style={{ fontSize: 32, marginBottom: 10 }}>📦</div>
-                                        কোনো order নেই
+                                        There is no order.
                                     </td></tr>
                                 ) : orders.map(order => {
                                     const st = STATUS_STYLE[order.status] || STATUS_STYLE.pending;
@@ -269,7 +269,7 @@ export default function Orders() {
                     {newKey && (
                         <div style={{ background: 'var(--green-dim)', border: '1px solid var(--green)', borderRadius: 10, padding: '14px 18px', marginBottom: 20 }}>
                             <div style={{ fontSize: 13, color: 'var(--green)', fontWeight: 600, marginBottom: 8 }}>
-                                ✅ API Key তৈরি হয়েছে! এখনই copy করুন — এরপর আর দেখা যাবে না।
+                                ✅ API Key created! Copy it now — it won't be visible again.
                             </div>
                             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                                 <code style={{ flex: 1, background: 'var(--bg-tertiary)', padding: '8px 12px', borderRadius: 6, fontSize: 12, fontFamily: "'DM Mono', monospace", wordBreak: 'break-all', color: 'var(--text)' }}>
@@ -284,7 +284,7 @@ export default function Orders() {
                     )}
 
                     <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, marginBottom: 20 }}>
-                        <h3 style={{ fontFamily: 'Syne', fontSize: 15, fontWeight: 600, marginBottom: 12 }}>📖 OMS API কিভাবে ব্যবহার করবেন</h3>
+                        <h3 style={{ fontFamily: 'Syne', fontSize: 15, fontWeight: 600, marginBottom: 12 }}>📖 How to use OMS API</h3>
                         <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 8 }}>
                             <strong>Base URL:</strong>{' '}
                             <code style={{ background: 'var(--bg-tertiary)', padding: '2px 8px', borderRadius: 4 }}>
@@ -315,7 +315,7 @@ export default function Orders() {
                     </div>
 
                     <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, marginBottom: 20 }}>
-                        <h3 style={{ fontFamily: 'Syne', fontSize: 15, fontWeight: 600, marginBottom: 14 }}>➕ নতুন API Key তৈরি করুন</h3>
+                        <h3 style={{ fontFamily: 'Syne', fontSize: 15, fontWeight: 600, marginBottom: 14 }}>➕ Create new API Key</h3>
                         <form onSubmit={createApiKey} style={{ display: 'flex', gap: 10 }}>
                             <input className="input" style={{ flex: 1, fontSize: 13 }}
                                 value={newKeyName} onChange={e => setNewKeyName(e.target.value)}
@@ -347,7 +347,7 @@ export default function Orders() {
                         ))}
                         {apiKeys.length === 0 && (
                             <div style={{ textAlign: 'center', color: 'var(--text-3)', padding: 30 }}>
-                                কোনো API key নেই। উপরে তৈরি করুন।
+                                No any API key.Create api key.
                             </div>
                         )}
                     </div>
