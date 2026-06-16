@@ -107,7 +107,7 @@ export default function Orders() {
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
                 <div>
-                    <h1 className="stat-number" style={{ fontSize: 22, fontWeight: 700 }}>📦 Orders</h1>
+                    <h1 style={{ fontFamily: 'Syne', fontSize: 22, fontWeight: 700 }}>📦 Orders</h1>
                     <p style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 4 }}>
                         Orders and OMS management from Meta chat
                     </p>
