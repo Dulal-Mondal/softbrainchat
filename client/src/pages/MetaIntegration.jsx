@@ -144,6 +144,7 @@ import MetaApiForm from '../components/meta/MetaApiForm';
 import ReviewModal from '../components/meta/ReviewModal';
 import { usePlan } from '../context/PlanContext';
 import toast from 'react-hot-toast';
+import { useSocketEvent } from '../hooks/useSocket';
 
 const STATUS_STYLE = {
     pending: { bg: 'var(--bg-tertiary)', color: 'var(--text-3)', label: 'Pending' },
@@ -199,6 +200,13 @@ export default function MetaIntegration() {
     }, [msgFilter]);
 
     useEffect(() => { loadChannels(); loadMessages(); }, [loadChannels, loadMessages]);
+
+    // ── Real-time: নতুন message বা update এলে auto reload ────
+    useSocketEvent('meta:new_message', () => {
+        loadMessages();
+        toast('📩 নতুন message এসেছে', { icon: '🔔' });
+    });
+    useSocketEvent('meta:message_updated', () => loadMessages());
 
     if (!canAccess('metaReply')) {
         return (
