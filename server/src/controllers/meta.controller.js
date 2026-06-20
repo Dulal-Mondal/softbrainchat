@@ -1520,9 +1520,12 @@ exports.webhookReceive = async (req, res) => {
                 // GPT-4o Vision দিয়ে product identify করো
                 const visionAnswer = await analyzeProductImage({ base64, mimeType, knowledgeContext });
 
-                // Vision answer থেকে product info extract করার চেষ্টা করো
-                // Product name এবং price extract করো (simple heuristic)
+                // Vision answer থেকে product info extract করো
                 const productInfo = extractProductFromVisionAnswer(visionAnswer);
+
+                // Customer এর পাঠানো image URL (WhatsApp/Messenger/Instagram)
+                const customerImageUrl = msgData.imageUrl
+                    || (msgData.mediaId ? `whatsapp-media:${msgData.mediaId}` : '');
 
                 // Order flow শুরু করো
                 if (productInfo) {
@@ -1535,6 +1538,7 @@ exports.webhookReceive = async (req, res) => {
                         senderName: profile.name,
                         senderProfilePic: profile.profilePic,
                         productInfo,
+                        productImage: customerImageUrl,
                     });
                     // Vision answer + order prompt combine করো
                     answer = visionAnswer + '\n\n' + answer;

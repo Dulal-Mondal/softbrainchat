@@ -87,10 +87,12 @@ const OrderSchema = new mongoose.Schema({
 
     product: {
         name: { type: String, required: true },
+        code: { type: String, default: '' },   // ← নতুন (product code/SKU)
         price: { type: String, default: '' },
-        size: { type: String, default: '' },   // ← নতুন
+        size: { type: String, default: '' },
         quantity: { type: Number, default: 1 },
         desc: { type: String, default: '' },
+        image: { type: String, default: '' },   // ← নতুন (customer এর পাঠানো image)
     },
 
     status: {
@@ -99,7 +101,6 @@ const OrderSchema = new mongoose.Schema({
         default: 'pending',
     },
 
-    // Status change হলে customer কে notify করা হয়েছে কিনা track করতে
     lastNotifiedStatus: { type: String, default: 'pending' },
 
     omsSynced: { type: Boolean, default: false },

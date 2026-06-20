@@ -428,7 +428,6 @@ const OrderSession = require('../models/OrderSession.model');
 const Order = require('../models/Order.model');
 const { submitToOMS } = require('./oms.service');
 
-// Order intent detect করো (text)
 const isOrderIntent = (text) => {
     if (!text) return false;
     const t = text.toLowerCase().trim();
@@ -464,17 +463,26 @@ const isValidPhone = (text) => {
     return digits.length >= 10 && digits.length <= 15;
 };
 
-// AI message থেকে product নাম ও দাম extract করো
+// AI message থেকে product নাম, code ও দাম extract করো
 function extractProductFromText(text) {
     if (!text) return null;
+
     const priceMatch = text.match(/(\d[\d,]{2,})\s*(টাকা|taka|tk|৳|bdt)/i)
         || text.match(/[৳]\s*(\d[\d,]+)/);
+
+    // Product code — "1996", "Code: ABC123", "#1996"
+    const codeMatch = text.match(/(?:code|কোড|#)[:\s]*([A-Za-z0-9-]+)/i)
+        || text.match(/-\s*(\d{3,})/);   // "Kamiz 3 piece - 1996"
+
     const nameMatch = text.match(/"([^"]+)"/)
         || text.match(/\*([^*]+)\*/)
         || text.match(/([A-Z][a-zA-Z]+\s+\d+\s*piece)/i);
-    if (!nameMatch && !priceMatch) return null;
+
+    if (!nameMatch && !priceMatch && !codeMatch) return null;
+
     return {
         name: nameMatch ? nameMatch[1].trim() : 'Product',
+        code: codeMatch ? codeMatch[1].trim() : '',
         price: priceMatch ? priceMatch[0].trim() : '',
     };
 }
@@ -484,6 +492,7 @@ const handleOrderFlow = async ({
     senderId, channelId, userId, platform, text,
     senderName, senderProfilePic,
     productInfo = null,
+    productImage = '',       // ← নতুন: customer এর পাঠানো image URL
     lastAiMessage = '',
 }) => {
 
@@ -497,8 +506,10 @@ const handleOrderFlow = async ({
                 userId, platform, step: 'confirm_pending',
                 orderData: {
                     productName: productInfo.name || '',
+                    productCode: productInfo.code || '',
                     productPrice: productInfo.price || '',
                     productDesc: productInfo.desc || '',
+                    productImage: productImage || '',     // ← image save করো
                     size: '', quantity: 1, customerName: '', address: '', phone: '',
                 },
                 lastActivityAt: new Date(),
@@ -507,7 +518,8 @@ const handleOrderFlow = async ({
         );
 
         const price = productInfo.price ? `\n💰 মূল্য: ${productInfo.price}` : '';
-        return `✅ আমি এই product টি চিনতে পেরেছি:\n📦 *${productInfo.name}*${price}\n\nআপনি কি এটি order করতে চান?\n👉 Order করতে *হ্যাঁ* লিখুন\n👉 বাদ দিতে *না* লিখুন`;
+        const code = productInfo.code ? `\n🔖 Code: ${productInfo.code}` : '';
+        return `✅ আমি এই product টি চিনতে পেরেছি:\n📦 *${productInfo.name}*${code}${price}\n\nআপনি কি এটি order করতে চান?\n👉 Order করতে *হ্যাঁ* লিখুন\n👉 বাদ দিতে *না* লিখুন`;
     }
 
     // ── CASE 2: Text এ order intent ─────────────────────────
@@ -517,11 +529,13 @@ const handleOrderFlow = async ({
         session = await OrderSession.findOneAndUpdate(
             { senderId, channelId },
             {
-                userId, platform, step: 'collecting_size',   // ← size আগে জিজ্ঞেস করো
+                userId, platform, step: 'collecting_size',
                 orderData: {
                     productName: product?.name || 'Product',
+                    productCode: product?.code || '',
                     productPrice: product?.price || '',
                     productDesc: '',
+                    productImage: '',
                     size: '', quantity: 1, customerName: '', address: '', phone: '',
                 },
                 lastActivityAt: new Date(),
@@ -530,7 +544,7 @@ const handleOrderFlow = async ({
         );
 
         const productLine = product?.name
-            ? `\n📦 Product: *${product.name}*${product.price ? ` (${product.price})` : ''}\n`
+            ? `\n📦 Product: *${product.name}*${product.code ? ` (Code: ${product.code})` : ''}${product.price ? ` — ${product.price}` : ''}\n`
             : '';
         return `✅ আপনার order নিচ্ছি!${productLine}\n📏 আপনার পছন্দের *size* লিখুন:\n(যেমন: S / M / L / XL / XXL / Free Size)`;
     }
@@ -541,14 +555,14 @@ const handleOrderFlow = async ({
 
     session.lastActivityAt = new Date();
 
-    // ── CASE 3: Confirm pending (image থেকে এসেছে) ──────────
+    // ── CASE 3: Confirm pending ─────────────────────────────
     if (session.step === 'confirm_pending') {
         if (isCancellation(text)) {
             await OrderSession.deleteOne({ senderId, channelId });
             return '❌ Order বাদ দেওয়া হয়েছে। আর কিছু লাগলে জানান।';
         }
         if (isOrderConfirmation(text)) {
-            session.step = 'collecting_size';   // ← size জিজ্ঞেস করো
+            session.step = 'collecting_size';
             await session.save();
             return '📏 আপনার পছন্দের *size* লিখুন:\n(যেমন: S / M / L / XL / XXL / Free Size)';
         }
@@ -603,10 +617,12 @@ const handleOrderFlow = async ({
             },
             product: {
                 name: session.orderData.productName,
+                code: session.orderData.productCode,
                 price: session.orderData.productPrice,
                 size: session.orderData.size,
                 quantity: session.orderData.quantity || 1,
                 desc: session.orderData.productDesc,
+                image: session.orderData.productImage,
             },
             status: 'pending',
             lastNotifiedStatus: 'pending',
@@ -629,8 +645,8 @@ const handleOrderFlow = async ({
             });
 
         const sizeLine = order.product.size ? `\n📏 *Size:* ${order.product.size}` : '';
+        const codeLine = order.product.code ? `\n🔖 *Code:* ${order.product.code}` : '';
 
-        // Order সম্পন্ন — session delete করো যাতে পরের message normal AI handle করে
         await OrderSession.deleteOne({ senderId, channelId });
 
         return `✅ *Order Confirmed!*
@@ -639,7 +655,7 @@ const handleOrderFlow = async ({
 👤 *নাম:* ${order.customer.name}
 📞 *মোবাইল:* ${order.customer.phone}
 🏠 *ঠিকানা:* ${order.customer.address}
-📦 *Product:* ${order.product.name}${sizeLine}${order.product.price ? `\n💰 *মূল্য:* ${order.product.price}` : ''}
+📦 *Product:* ${order.product.name}${codeLine}${sizeLine}${order.product.price ? `\n💰 *মূল্য:* ${order.product.price}` : ''}
 
 আপনার order টি পেয়েছি! শীঘ্রই আমাদের টিম যোগাযোগ করবে। 🎉
 ধন্যবাদ! 🙏`;

@@ -41,12 +41,10 @@ const OrderSessionSchema = new mongoose.Schema({
     platform: { type: String, enum: ['whatsapp', 'messenger', 'instagram'], required: true },
     senderId: { type: String, required: true },
 
-    // step state machine — size যোগ হয়েছে
     step: {
         type: String,
         enum: [
-            'idle', 'confirm_pending',
-            'collecting_size',          // ← নতুন
+            'idle', 'confirm_pending', 'collecting_size',
             'collecting_name', 'collecting_address', 'collecting_phone',
             'completed', 'cancelled',
         ],
@@ -55,9 +53,11 @@ const OrderSessionSchema = new mongoose.Schema({
 
     orderData: {
         productName: { type: String, default: '' },
+        productCode: { type: String, default: '' },   // ← নতুন
         productPrice: { type: String, default: '' },
         productDesc: { type: String, default: '' },
-        size: { type: String, default: '' },   // ← নতুন
+        productImage: { type: String, default: '' },   // ← নতুন (image URL)
+        size: { type: String, default: '' },
         quantity: { type: Number, default: 1 },
         customerName: { type: String, default: '' },
         address: { type: String, default: '' },

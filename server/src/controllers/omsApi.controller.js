@@ -244,7 +244,9 @@ exports.listOrders = async (req, res) => {
             product: {
                 name: o.product.name,
                 price: o.product.price,
+                code: o.product.code,
                 size: o.product.size,
+                image: o.product.image,
                 quantity: o.product.quantity,
             },
             notes: o.notes,
