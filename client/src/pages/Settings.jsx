@@ -19,21 +19,17 @@ export default function Settings() {
     const { theme, toggleTheme, isDark } = useTheme();
     const { plan, canAccess } = usePlan();
 
-    // Profile
     const [name, setName] = useState(user?.name || '');
     const [saving, setSaving] = useState(false);
 
-    // LLM providers
     const [providers, setProviders] = useState(user?.llmProviders || []);
     const [newProvName, setNewProvName] = useState('');
     const [newProvKey, setNewProvKey] = useState('');
     const [newProvModel, setNewProvModel] = useState('');
     const [addingProv, setAddingProv] = useState(false);
 
-    // Default model
     const [defaultModel, setDefaultModel] = useState(user?.preferences?.defaultModel || 'gpt-4o');
 
-    // Knowledge base
     const [kbItems, setKbItems] = useState([]);
     const [urlInput, setUrlInput] = useState('');
     const [addingUrl, setAddingUrl] = useState(false);
@@ -132,7 +128,6 @@ export default function Settings() {
     return (
         <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', padding: 32 }}>
 
-            {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
                 <h1 style={{ fontFamily: 'Syne', fontSize: 24, fontWeight: 700 }}>⚙️ Settings</h1>
                 <Link to="/dashboard" className="btn btn-outline btn-sm">← Dashboard</Link>
@@ -140,7 +135,7 @@ export default function Settings() {
 
             <div style={{ maxWidth: 680, display: 'flex', flexDirection: 'column', gap: 28 }}>
 
-                {/* ── Appearance ─────────────────────────────────────── */}
+                {/* ── Appearance ── */}
                 <div className="card">
                     <h2 style={sectionTitle}>Appearance</h2>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -156,7 +151,7 @@ export default function Settings() {
                     </div>
                 </div>
 
-                {/* ── Profile ────────────────────────────────────────── */}
+                {/* ── Profile ── */}
                 <div className="card">
                     <h2 style={sectionTitle}>Profile</h2>
                     <div style={{ marginBottom: 14 }}>
@@ -172,7 +167,7 @@ export default function Settings() {
                     </button>
                 </div>
 
-                {/* ── Default Model ───────────────────────────────────── */}
+                {/* ── Default Model ── */}
                 <div className="card">
                     <h2 style={sectionTitle}>Default AI Model</h2>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -196,7 +191,7 @@ export default function Settings() {
                     </div>
                 </div>
 
-                {/* ── Custom LLM Providers ────────────────────────────── */}
+                {/* ── Custom LLM Providers ── */}
                 <div className="card">
                     <h2 style={sectionTitle}>
                         Custom LLM Providers
@@ -262,7 +257,7 @@ export default function Settings() {
                     )}
                 </div>
 
-                {/* ── Knowledge Base ──────────────────────────────────── */}
+                {/* ── Knowledge Base ── */}
                 <div className="card">
                     <h2 style={sectionTitle}>Knowledge Base</h2>
 
@@ -286,8 +281,13 @@ export default function Settings() {
 
                     <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                         <label className="btn btn-outline" style={{ cursor: 'pointer', fontSize: 13 }}>
-                            <input type="file" accept=".pdf,.docx,.txt" style={{ display: 'none' }} onChange={handleFileUpload} />
-                            📎 Upload File
+                            <input
+                                type="file"
+                                accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.gif,.webp,image/*"
+                                style={{ display: 'none' }}
+                                onChange={handleFileUpload}
+                            />
+                            📎 Upload File / Image
                         </label>
 
                         {addingUrl ? (
@@ -304,12 +304,13 @@ export default function Settings() {
                     </div>
 
                     <div style={{ marginTop: 12, fontSize: 11, color: 'var(--text-3)' }}>
+                        PDF, DOCX, TXT, এবং Image (PNG/JPG) — image হলে লেখা OCR করে পড়া হবে।<br />
                         Plan limit: {user?.planLimits?.knowledgeFiles === Infinity ? '∞' : user?.planLimits?.knowledgeFiles} files,{' '}
                         {user?.planLimits?.knowledgeUrls === Infinity ? '∞' : user?.planLimits?.knowledgeUrls} URLs
                     </div>
                 </div>
 
-                {/* ── Current Plan ────────────────────────────────────── */}
+                {/* ── Current Plan ── */}
                 <div className="card" style={{ border: `1px solid ${plan === 'pro-max' ? 'var(--purple)' : plan === 'pro' ? 'var(--accent)' : 'var(--border)'}` }}>
                     <h2 style={sectionTitle}>Current Plan</h2>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
