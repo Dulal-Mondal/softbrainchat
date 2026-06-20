@@ -5,6 +5,7 @@ const { sendMessage: ragSend } = require('../services/langchain.service');
 const { searchSimilar } = require('../services/vectorStore.service');
 const { downloadMetaImage, analyzeProductImage, getWhatsAppImageUrl } = require('../services/vision.service');
 const { handleOrderFlow } = require('../services/orderFlow.service');
+const { emitToUser } = require('../config/socket');
 
 // ── GET /api/meta/channels ────────────────────────────────────
 exports.getChannels = async (req, res) => {
@@ -120,6 +121,10 @@ exports.humanReply = async (req, res) => {
         await msg.save();
         msg.channelId.stats.humanReplied += 1;
         await msg.channelId.save();
+
+        // Real-time update
+        emitToUser(req.user._id, 'meta:message_updated', { message: msg });
+
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -177,9 +182,13 @@ exports.webhookReceive = async (req, res) => {
         channel.stats.totalMessages += 1;
         await channel.save();
 
+        // ── Real-time: নতুন message এসেছে ──────────────────────
+        emitToUser(channel.userId._id, 'meta:new_message', { message: metaMsg });
+
         if (!channel.autoReplyEnabled) {
             metaMsg.status = 'review_needed';
             await metaMsg.save();
+            emitToUser(channel.userId._id, 'meta:message_updated', { message: metaMsg });
             return;
         }
 
@@ -303,6 +312,9 @@ exports.webhookReceive = async (req, res) => {
             metaMsg.status = 'review_needed';
             await metaMsg.save();
 
+            // Real-time update
+            emitToUser(channel.userId._id, 'meta:message_updated', { message: metaMsg });
+
             // Customer কে polite holding message পাঠাও ("ক্যাটালগে নেই" নয়)
             try {
                 const holdingMsg = 'আপনার message টি পেয়েছি। 🙏 একটু পরে আমাদের একজন প্রতিনিধি আপনাকে বিস্তারিত জানাবেন।';
@@ -324,6 +336,14 @@ exports.webhookReceive = async (req, res) => {
 
         channel.stats.aiReplied += 1;
         await channel.save();
+
+        // ── Real-time: AI reply হয়েছে ─────────────────────────
+        emitToUser(channel.userId._id, 'meta:message_updated', { message: metaMsg });
+
+        // নতুন order তৈরি হয়ে থাকলে orders page ও refresh হবে
+        if (answer.includes('Order Confirmed')) {
+            emitToUser(channel.userId._id, 'order:new', {});
+        }
 
     } catch (err) {
         console.error('Webhook receive error:', err.message);
