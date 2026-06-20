@@ -273,6 +273,188 @@
 
 
 
+// const { ChatOpenAI } = require('@langchain/openai');
+// const { ChatAnthropic } = require('@langchain/anthropic');
+// const {
+//     HumanMessage,
+//     AIMessage,
+//     SystemMessage,
+// } = require('@langchain/core/messages');
+// const { searchSimilar } = require('./vectorStore.service');
+
+// // ── LLM Factory ───────────────────────────────────────────────
+// const BUILTIN_MODELS = {
+//     'gpt-4o': (key) =>
+//         new ChatOpenAI({ modelName: 'gpt-4o', temperature: 0.7, openAIApiKey: key }),
+//     'gpt-4o-mini': (key) =>
+//         new ChatOpenAI({ modelName: 'gpt-4o-mini', temperature: 0.7, openAIApiKey: key }),
+//     'gpt-3.5-turbo': (key) =>
+//         new ChatOpenAI({ modelName: 'gpt-3.5-turbo', temperature: 0.7, openAIApiKey: key }),
+//     'claude-3-5-sonnet': (key) =>
+//         new ChatAnthropic({ modelName: 'claude-3-5-sonnet-20241022', temperature: 0.7, anthropicApiKey: key }),
+// };
+
+// const getLLM = (modelName = 'gpt-4o', customProvider = null) => {
+//     if (customProvider?.apiKey) {
+//         return new ChatOpenAI({
+//             modelName: customProvider.model || 'gpt-4o',
+//             temperature: 0.7,
+//             openAIApiKey: customProvider.apiKey,
+//             ...(customProvider.baseUrl && {
+//                 configuration: { baseURL: customProvider.baseUrl },
+//             }),
+//         });
+//     }
+
+//     const factory = BUILTIN_MODELS[modelName];
+//     if (!factory) {
+//         console.warn(`Model "${modelName}" not found, using gpt-4o`);
+//         return BUILTIN_MODELS['gpt-4o'](process.env.OPENAI_API_KEY);
+//     }
+
+//     const apiKey = modelName.startsWith('claude')
+//         ? process.env.ANTHROPIC_API_KEY
+//         : process.env.OPENAI_API_KEY;
+
+//     return factory(apiKey);
+// };
+
+// // ── System Prompt ─────────────────────────────────────────────
+// const buildSystemPrompt = (context, hasContext, userProfile) => {
+//     // ✅ User info যোগ করো
+//     const userInfo = userProfile
+//         ? `\n\nUser Information:\n- Name: ${userProfile.name}\n- Plan: ${userProfile.plan}`
+//         : '';
+
+//     const base = `তুমি SoftBrainChat AI assistant। তুমি সবসময় helpful, accurate এবং friendly।${userInfo}
+
+// নিচের rules follow করো:
+// - User যে ভাষায় কথা বলে সেই ভাষায় উত্তর দাও (বাংলা বা English)
+// - Markdown format ব্যবহার করো সুন্দর formatting এর জন্য
+// - Short এবং precise উত্তর দাও, প্রয়োজনে বিস্তারিত বলো
+// - User এর নাম জানলে personally address করো`;
+
+//     if (!hasContext) {
+//         return base + `\n\n- যদি Knowledge Base তথ্য না থাকে, সাধারণ জ্ঞান থেকে উত্তর দাও
+// - কিন্তু যদি কোনো specific business information জিজ্ঞেস করে যা তোমার কাছে নেই, সৎভাবে বলো: "আমার কাছে এই তথ্য নেই। Knowledge Base এ যোগ করুন।"`;
+//     }
+
+//     return base + `
+
+// তোমার কাছে নিচের Knowledge Base context আছে। এটা থেকে accurate উত্তর দাও:
+
+// === KNOWLEDGE BASE ===
+// ${context}
+// === END ===
+
+// Rules:
+// - উপরের context থেকে relevant তথ্য দিয়ে উত্তর দাও
+// - Context এ উত্তর না পেলে বলো: "আমার কাছে এই তথ্য নেই।"
+// - Context থেকে quote করলে সেটা clearly বলো
+// - নিজে থেকে তথ্য fabricate করবে না`;
+// };
+
+// // ── Chat history → LangChain messages format ──────────────────
+// const formatHistory = (chatHistory) => {
+//     if (!chatHistory || chatHistory.length === 0) return [];
+
+//     const filtered = chatHistory.filter(
+//         m => m.role === 'user' || m.role === 'assistant'
+//     );
+
+//     const recent = filtered.slice(-20);
+
+//     return recent.map(m => {
+//         if (m.role === 'user') return new HumanMessage(m.content);
+//         const content = m.correction || m.content;
+//         return new AIMessage(content);
+//     });
+// };
+
+// // ── Main: AI reply generate করো ──────────────────────────────
+// const sendMessage = async ({
+//     userMessage,
+//     chatHistory = [],
+//     userId,
+//     userProfile = null,        // ✅ নতুন parameter
+//     model = 'gpt-4o',
+//     ragEnabled = true,
+//     customProvider = null,
+// }) => {
+//     const llm = getLLM(model, customProvider);
+
+//     let context = '';
+//     let sources = [];
+//     let ragUsed = false;
+
+//     if (ragEnabled && userId) {
+//         try {
+//             const results = await searchSimilar(userMessage, userId, 5);
+
+//             if (results.length > 0) {
+//                 ragUsed = true;
+
+//                 context = results
+//                     .map((r, i) => {
+//                         const source = r.metadata?.fileName || r.metadata?.url || r.metadata?.title || 'Document';
+//                         return `[Source ${i + 1}: ${source}]\n${r.content}`;
+//                     })
+//                     .join('\n\n---\n\n');
+
+//                 sources = results.map(r => ({
+//                     file: r.metadata?.fileName || null,
+//                     url: r.metadata?.url || null,
+//                     excerpt: r.content.substring(0, 200) + (r.content.length > 200 ? '...' : ''),
+//                     score: r.score,
+//                 }));
+
+//                 console.log(`📚 RAG: Found ${results.length} relevant chunks (user: ${userId})`);
+//             } else {
+//                 console.log(`📭 RAG: No relevant chunks found (user: ${userId})`);
+//             }
+//         } catch (err) {
+//             console.error('RAG search failed:', err.message);
+//         }
+//     }
+
+//     // ✅ userProfile pass করো
+//     const systemPrompt = buildSystemPrompt(context, ragUsed, userProfile);
+//     const historyMessages = formatHistory(chatHistory);
+
+//     const messages = [
+//         new SystemMessage(systemPrompt),
+//         ...historyMessages,
+//         new HumanMessage(userMessage),
+//     ];
+
+//     console.log(`🤖 LLM: ${model} | RAG: ${ragUsed} | History: ${historyMessages.length} msgs`);
+
+//     const response = await llm.invoke(messages);
+//     const answer = response.content;
+
+//     const noAnswerPhrases = [
+//         'আমার কাছে এই তথ্য নেই',
+//         'knowledge base এ যোগ করুন',
+//         "i don't have",
+//         'i cannot find',
+//         'i do not have information',
+//         'not in my knowledge',
+//     ];
+
+//     const cantAnswer = noAnswerPhrases.some(phrase =>
+//         answer.toLowerCase().includes(phrase.toLowerCase())
+//     );
+
+//     return { answer, sources, ragUsed, cantAnswer };
+// };
+
+// module.exports = { sendMessage };
+
+
+
+
+
+
 const { ChatOpenAI } = require('@langchain/openai');
 const { ChatAnthropic } = require('@langchain/anthropic');
 const {
@@ -321,7 +503,6 @@ const getLLM = (modelName = 'gpt-4o', customProvider = null) => {
 
 // ── System Prompt ─────────────────────────────────────────────
 const buildSystemPrompt = (context, hasContext, userProfile) => {
-    // ✅ User info যোগ করো
     const userInfo = userProfile
         ? `\n\nUser Information:\n- Name: ${userProfile.name}\n- Plan: ${userProfile.plan}`
         : '';
@@ -332,11 +513,12 @@ const buildSystemPrompt = (context, hasContext, userProfile) => {
 - User যে ভাষায় কথা বলে সেই ভাষায় উত্তর দাও (বাংলা বা English)
 - Markdown format ব্যবহার করো সুন্দর formatting এর জন্য
 - Short এবং precise উত্তর দাও, প্রয়োজনে বিস্তারিত বলো
-- User এর নাম জানলে personally address করো`;
+- User এর নাম জানলে personally address করো
+- ছোটখাটো greeting বা ধন্যবাদ এর উত্তর স্বাভাবিকভাবে দাও (যেমন: "ধন্যবাদ", "ok", "thik ace") — এগুলোকে "তথ্য নেই" বলবে না`;
 
     if (!hasContext) {
-        return base + `\n\n- যদি Knowledge Base তথ্য না থাকে, সাধারণ জ্ঞান থেকে উত্তর দাও
-- কিন্তু যদি কোনো specific business information জিজ্ঞেস করে যা তোমার কাছে নেই, সৎভাবে বলো: "আমার কাছে এই তথ্য নেই। Knowledge Base এ যোগ করুন।"`;
+        return base + `\n\n- যদি Knowledge Base এ তথ্য না থাকে, সাধারণ কথোপকথন স্বাভাবিকভাবে চালিয়ে যাও
+- কোনো specific product/price জিজ্ঞেস করলে যা তোমার কাছে নেই, friendly ভাবে বলো: "এই বিষয়ে আমাদের একজন প্রতিনিধি আপনাকে শীঘ্রই জানাবেন।"`;
     }
 
     return base + `
@@ -349,21 +531,16 @@ ${context}
 
 Rules:
 - উপরের context থেকে relevant তথ্য দিয়ে উত্তর দাও
-- Context এ উত্তর না পেলে বলো: "আমার কাছে এই তথ্য নেই।"
-- Context থেকে quote করলে সেটা clearly বলো
-- নিজে থেকে তথ্য fabricate করবে না`;
+- Context এ specific উত্তর না পেলে friendly ভাবে বলো: "এই বিষয়ে আমাদের একজন প্রতিনিধি আপনাকে শীঘ্রই জানাবেন।"
+- নিজে থেকে দাম বা তথ্য fabricate করবে না
+- Greeting বা ছোট কথার উত্তর স্বাভাবিকভাবে দাও`;
 };
 
 // ── Chat history → LangChain messages format ──────────────────
 const formatHistory = (chatHistory) => {
     if (!chatHistory || chatHistory.length === 0) return [];
-
-    const filtered = chatHistory.filter(
-        m => m.role === 'user' || m.role === 'assistant'
-    );
-
+    const filtered = chatHistory.filter(m => m.role === 'user' || m.role === 'assistant');
     const recent = filtered.slice(-20);
-
     return recent.map(m => {
         if (m.role === 'user') return new HumanMessage(m.content);
         const content = m.correction || m.content;
@@ -371,12 +548,24 @@ const formatHistory = (chatHistory) => {
     });
 };
 
+// ── ছোট/greeting message কিনা check করো ──────────────────────
+const isSmallTalk = (text) => {
+    if (!text) return false;
+    const t = text.toLowerCase().trim();
+    const smallTalk = [
+        'ok', 'okay', 'thik ace', 'ঠিক আছে', 'ধন্যবাদ', 'thanks', 'thank you',
+        'hmm', 'হুম', 'acha', 'আচ্ছা', 'good', 'ভালো', 'bye', 'hi', 'hello',
+        'হাই', 'হ্যালো', 'assalamu', 'আসসালামু', 'ji', 'জি', 'yes', 'হ্যাঁ',
+    ];
+    return t.length < 25 && smallTalk.some(w => t.includes(w));
+};
+
 // ── Main: AI reply generate করো ──────────────────────────────
 const sendMessage = async ({
     userMessage,
     chatHistory = [],
     userId,
-    userProfile = null,        // ✅ নতুন parameter
+    userProfile = null,
     model = 'gpt-4o',
     ragEnabled = true,
     customProvider = null,
@@ -390,34 +579,29 @@ const sendMessage = async ({
     if (ragEnabled && userId) {
         try {
             const results = await searchSimilar(userMessage, userId, 5);
-
             if (results.length > 0) {
                 ragUsed = true;
-
                 context = results
                     .map((r, i) => {
                         const source = r.metadata?.fileName || r.metadata?.url || r.metadata?.title || 'Document';
                         return `[Source ${i + 1}: ${source}]\n${r.content}`;
                     })
                     .join('\n\n---\n\n');
-
                 sources = results.map(r => ({
                     file: r.metadata?.fileName || null,
                     url: r.metadata?.url || null,
                     excerpt: r.content.substring(0, 200) + (r.content.length > 200 ? '...' : ''),
                     score: r.score,
                 }));
-
-                console.log(`📚 RAG: Found ${results.length} relevant chunks (user: ${userId})`);
+                console.log(`📚 RAG: Found ${results.length} chunks (user: ${userId})`);
             } else {
-                console.log(`📭 RAG: No relevant chunks found (user: ${userId})`);
+                console.log(`📭 RAG: No chunks found (user: ${userId})`);
             }
         } catch (err) {
             console.error('RAG search failed:', err.message);
         }
     }
 
-    // ✅ userProfile pass করো
     const systemPrompt = buildSystemPrompt(context, ragUsed, userProfile);
     const historyMessages = formatHistory(chatHistory);
 
@@ -427,23 +611,28 @@ const sendMessage = async ({
         new HumanMessage(userMessage),
     ];
 
-    console.log(`🤖 LLM: ${model} | RAG: ${ragUsed} | History: ${historyMessages.length} msgs`);
+    console.log(`🤖 LLM: ${model} | RAG: ${ragUsed} | History: ${historyMessages.length}`);
 
     const response = await llm.invoke(messages);
     const answer = response.content;
 
-    const noAnswerPhrases = [
-        'আমার কাছে এই তথ্য নেই',
-        'knowledge base এ যোগ করুন',
-        "i don't have",
-        'i cannot find',
-        'i do not have information',
-        'not in my knowledge',
-    ];
+    // ── cantAnswer detection ──────────────────────────────────
+    // ছোট/greeting message হলে কখনোই review তে পাঠাবে না
+    let cantAnswer = false;
 
-    const cantAnswer = noAnswerPhrases.some(phrase =>
-        answer.toLowerCase().includes(phrase.toLowerCase())
-    );
+    if (!isSmallTalk(userMessage)) {
+        const noAnswerPhrases = [
+            'প্রতিনিধি আপনাকে শীঘ্রই জানাবেন',
+            'আমার কাছে এই তথ্য নেই',
+            "i don't have",
+            'i cannot find',
+            'i do not have information',
+            'not in my knowledge',
+        ];
+        cantAnswer = noAnswerPhrases.some(phrase =>
+            answer.toLowerCase().includes(phrase.toLowerCase())
+        );
+    }
 
     return { answer, sources, ragUsed, cantAnswer };
 };
