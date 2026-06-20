@@ -81,7 +81,6 @@ const { Pinecone } = require('@pinecone-database/pinecone');
 const { RecursiveCharacterTextSplitter } = require('@langchain/textsplitters');
 const { Document } = require('@langchain/core/documents');
 
-// ── Singletons ────────────────────────────────────────────────
 let _pinecone = null;
 let _embeddings = null;
 
@@ -105,8 +104,9 @@ const getEmbeddings = () => {
 
 // ── Text index করো ───────────────────────────────────────────
 const indexText = async (text, metadata) => {
-    if (!text || text.trim().length < 50) {
-        throw new Error('Text too short to index (minimum 50 chars)');
+    // OCR/short text support — minimum 10 chars
+    if (!text || text.trim().length < 10) {
+        throw new Error('Text too short to index (minimum 10 chars)');
     }
 
     const splitter = new RecursiveCharacterTextSplitter({
@@ -116,7 +116,8 @@ const indexText = async (text, metadata) => {
     });
 
     const rawChunks = await splitter.splitText(text);
-    const validChunks = rawChunks.filter(c => c.trim().length > 20);
+    // ছোট text ও allow করো (5 char এর বেশি হলেই)
+    const validChunks = rawChunks.filter(c => c.trim().length > 5);
 
     if (validChunks.length === 0) throw new Error('No valid chunks generated');
 
@@ -148,7 +149,6 @@ const searchSimilar = async (query, userId, topK = 5) => {
         const index = getPinecone().Index(process.env.PINECONE_INDEX);
         const namespace = `user-${userId}`;
 
-        // Namespace এ data আছে কিনা check করো
         const stats = await index.describeIndexStats();
         const nsStats = stats.namespaces?.[namespace];
         if (!nsStats || nsStats.recordCount === 0) return [];
@@ -185,7 +185,6 @@ const deleteByKbId = async (userId, kbId) => {
     }
 };
 
-// ── Namespace সম্পূর্ণ clear করো ─────────────────────────────
 const deleteNamespace = async (userId) => {
     const index = getPinecone().Index(process.env.PINECONE_INDEX);
     const namespace = `user-${userId}`;

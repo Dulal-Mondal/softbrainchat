@@ -56,7 +56,6 @@ if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 const storage = multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, uploadDir),
     filename: (_req, file, cb) => {
-        // Special characters সরাও filename থেকে
         const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
         cb(null, `${Date.now()}-${safe}`);
     },
@@ -70,21 +69,26 @@ const upload = multer({
             'application/pdf',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'text/plain',
+            // ── Image types (OCR এর জন্য) ──
+            'image/png',
+            'image/jpeg',
+            'image/jpg',
+            'image/gif',
+            'image/bmp',
+            'image/webp',
         ];
 
-        // mimetype check + extension check দুইটাই করো
         const ext = path.extname(file.originalname).toLowerCase();
-        const allowedExts = ['.pdf', '.docx', '.txt'];
+        const allowedExts = ['.pdf', '.docx', '.txt', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'];
 
         if (allowed.includes(file.mimetype) || allowedExts.includes(ext)) {
             cb(null, true);
         } else {
-            cb(new Error(`শুধু PDF, DOCX, TXT upload করা যাবে। আপনি দিয়েছেন: ${ext}`));
+            cb(new Error(`শুধু PDF, DOCX, TXT, PNG, JPG upload করা যাবে। আপনি দিয়েছেন: ${ext}`));
         }
     },
 });
 
-// Multer error handle করার জন্য wrapper
 const uploadMiddleware = (req, res, next) => {
     upload.single('file')(req, res, (err) => {
         if (err instanceof multer.MulterError) {
