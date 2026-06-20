@@ -436,14 +436,45 @@ const submitToOMS = async (order, userId) => {
 const testOmsConnection = async (config) => {
     try {
         const headers = buildHeaders(config);
-        const testUrl = config.apiUrl.replace(/\/orders\/?$/, '') + '/ping';
-        const res = await axios.get(testUrl, { headers, timeout: 10000 });
-        return { success: true, status: res.status };
-    } catch (err) {
-        // 404/405 — server reachable কিন্তু endpoint নেই, that's OK
-        if ([404, 405, 401, 403].includes(err.response?.status)) {
-            return { success: true, status: err.response.status, message: 'Server reachable' };
+
+        // Test URL বানাও — শেষের path segment বাদ দিয়ে /ping যোগ করো
+        // যেমন: .../api/webhook/order → .../api/webhook/ping
+        //       .../api/orders        → .../api/ping
+        let testUrl;
+        try {
+            const u = new URL(config.apiUrl);
+            const parts = u.pathname.split('/').filter(Boolean);
+            parts.pop();                 // শেষ অংশ বাদ (order/orders/webhook)
+            parts.push('ping');          // ping যোগ করো
+            u.pathname = '/' + parts.join('/');
+            testUrl = u.toString();
+        } catch {
+            testUrl = config.apiUrl.replace(/\/[^/]+\/?$/, '/ping');
         }
+
+        // প্রথমে GET /ping try করো
+        try {
+            const res = await axios.get(testUrl, { headers, timeout: 10000 });
+            return { success: true, status: res.status };
+        } catch (pingErr) {
+            // ping না থাকলে — মূল URL এ একটা HEAD/OPTIONS request করো
+            // যদি server response দেয় (এমনকি error হলেও), মানে server reachable
+            if (pingErr.response) {
+                return { success: true, status: pingErr.response.status, message: 'Server reachable' };
+            }
+            // একদম connect করতে না পারলে মূল URL try করো
+            try {
+                const res2 = await axios.post(config.apiUrl, { test: true }, { headers, timeout: 10000 });
+                return { success: true, status: res2.status };
+            } catch (mainErr) {
+                if (mainErr.response) {
+                    // server আছে কিন্তু error দিল (400/401/etc) — তাও মানে reachable
+                    return { success: true, status: mainErr.response.status, message: 'Server reachable' };
+                }
+                throw mainErr;
+            }
+        }
+    } catch (err) {
         return { success: false, error: err.message };
     }
 };
