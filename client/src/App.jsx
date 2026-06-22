@@ -164,6 +164,8 @@ const Billing = lazy(() => import('./pages/Billing'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
 const Orders = lazy(() => import('./pages/Orders'));
 const ApiDocs = lazy(() => import('./pages/ApiDocs'));
+const BusinessConfig = lazy(() => import('./pages/BusinessConfig'));
+
 
 function PageLoader() {
   return (
@@ -210,6 +212,7 @@ export default function App() {
                   <Route path="/billing" element={<Billing />} />
                   <Route path="/admin" element={<AdminPanel />} />
                   <Route path="/orders" element={<Orders />} />
+                  <Route path="/business-setup" element={<ProtectedRoute><BusinessConfig /></ProtectedRoute>} />
                 </Route>
 
                 {/* 404 */}

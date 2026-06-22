@@ -7,6 +7,7 @@ export default function Dashboard() {
     const { plan, usage, limits } = usePlan();
 
     const cards = [
+        { icon: '🏪', label: 'Business Setup', sub: 'Mode & order fields', link: '/business-setup' },
         { icon: '💬', label: 'AI Chat', sub: 'RAG-powered', link: '/chat' },
         { icon: '📲', label: 'Meta Auto-Reply', sub: 'WhatsApp/IG/FB', link: '/meta' },
         { icon: '📦', label: 'Orders', sub: 'OMS & tracking', link: '/orders' },
@@ -63,7 +64,7 @@ export default function Dashboard() {
             <h2 style={{ fontFamily: 'Syne', fontSize: 16, fontWeight: 600, marginBottom: 14 }}>
                 Quick Access
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
                 {cards.map((c, i) => (
                     <Link
                         key={i}
