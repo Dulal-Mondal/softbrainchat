@@ -927,10 +927,297 @@
 
 
 
+// const OrderSession = require('../models/OrderSession.model');
+// const Order = require('../models/Order.model');
+// const { submitToOMS } = require('./oms.service');
+// const { emitToUser } = require('../config/socket');
+
+// const isOrderIntent = (text) => {
+//     if (!text) return false;
+//     const t = text.toLowerCase().trim();
+//     const words = [
+//         'order confirm', 'confirm koren', 'confirm korun', 'order korbo', 'order korte chai',
+//         'order korben', 'অর্ডার কনফার্ম', 'অর্ডার করব', 'অর্ডার করতে চাই', 'কনফার্ম করেন',
+//         'কনফার্ম করুন', 'order dite chai', 'order nibo', 'kinbo', 'কিনবো', 'নিতে চাই',
+//         'order place', 'place order', 'অর্ডার দিন', 'order din', 'nibo', 'নিব',
+//     ];
+//     return words.some(w => t.includes(w));
+// };
+
+// const isOrderConfirmation = (text) => {
+//     if (!text) return false;
+//     const t = text.toLowerCase().trim();
+
+//     // হ্যাঁ এর সব রকম বানান (Bangla + English + Banglish)
+//     const words = [
+//         // Bangla
+//         'হ্যাঁ', 'হ্যা', 'হা', 'হাঁ', 'হ্যাঁ চাই', 'জি', 'জী', 'হুম', 'অবশ্যই',
+//         'কনফার্ম', 'দিন', 'চাই', 'নিব', 'নিবো', 'করেন', 'করুন', 'রাজি', 'আচ্ছা',
+//         // English
+//         'yes', 'yeah', 'yep', 'yup', 'yah', 'ok', 'okay', 'okk', 'oki',
+//         'confirm', 'sure', 'fine', 'done', 'agree', 'accept', 'proceed',
+//         // Banglish (যেভাবে customer লেখে)
+//         'hae', 'hay', 'haa', 'haah', 'haaa', 'hmm', 'hmmm', 'hm',
+//         'koren', 'korun', 'corbo', 'korbo', 'nibo', 'nib', 'chai', 'razi',
+//         'ji', 'jee', 'accha', 'acha', 'thik ace', 'thik', 'thikache',
+//         '1', 'one', '✅', '👍', '👌',
+//     ];
+
+//     // পুরো message যদি confirm শব্দের কাছাকাছি হয়
+//     return words.some(w => t.includes(w));
+// };
+
+// const isCancellation = (text) => {
+//     if (!text) return false;
+//     const t = text.toLowerCase().trim();
+//     const words = [
+//         'না', 'নাহ', 'নো', 'no', 'nope', 'nah', 'cancel', 'বাদ', 'বাতিল',
+//         'থাক', 'থাক না', 'lagbe na', 'লাগবে না', 'lagbena', 'na', 'not',
+//         'venge', 'cancel koro', 'বাদ দাও', 'দরকার নেই', 'chai na', 'চাই না',
+//         '❌',
+//     ];
+//     // exact match বা শুরুতে থাকলে cancel
+//     return words.some(w => t === w || t.startsWith(w + ' ') || t === w);
+// };
+
+// const isValidPhone = (text) => {
+//     const digits = text.replace(/\D/g, '');
+//     return digits.length >= 10 && digits.length <= 15;
+// };
+
+// // AI message থেকে product নাম, code ও দাম extract করো
+// function extractProductFromText(text) {
+//     if (!text) return null;
+
+//     const priceMatch = text.match(/(\d[\d,]{2,})\s*(টাকা|taka|tk|৳|bdt)/i)
+//         || text.match(/[৳]\s*(\d[\d,]+)/);
+
+//     // Product code — "1996", "Code: ABC123", "#1996"
+//     const codeMatch = text.match(/(?:code|কোড|#)[:\s]*([A-Za-z0-9-]+)/i)
+//         || text.match(/-\s*(\d{3,})/);   // "Kamiz 3 piece - 1996"
+
+//     const nameMatch = text.match(/"([^"]+)"/)
+//         || text.match(/\*([^*]+)\*/)
+//         || text.match(/([A-Z][a-zA-Z]+\s+\d+\s*piece)/i);
+
+//     if (!nameMatch && !priceMatch && !codeMatch) return null;
+
+//     return {
+//         name: nameMatch ? nameMatch[1].trim() : 'Product',
+//         code: codeMatch ? codeMatch[1].trim() : '',
+//         price: priceMatch ? priceMatch[0].trim() : '',
+//     };
+// }
+
+// // ── Main handler ─────────────────────────────────────────────
+// const handleOrderFlow = async ({
+//     senderId, channelId, userId, platform, text,
+//     senderName, senderProfilePic,
+//     productInfo = null,
+//     productImage = '',       // ← নতুন: customer এর পাঠানো image URL
+//     lastAiMessage = '',
+// }) => {
+
+//     let session = await OrderSession.findOne({ senderId, channelId });
+
+//     // ── CASE 1: Image থেকে product recognize ────────────────
+//     if (productInfo) {
+//         session = await OrderSession.findOneAndUpdate(
+//             { senderId, channelId },
+//             {
+//                 userId, platform, step: 'confirm_pending',
+//                 orderData: {
+//                     productName: productInfo.name || '',
+//                     productCode: productInfo.code || '',
+//                     productPrice: productInfo.price || '',
+//                     productDesc: productInfo.desc || '',
+//                     productImage: productImage || '',     // ← image save করো
+//                     size: '', quantity: 1, customerName: '', address: '', phone: '',
+//                 },
+//                 lastActivityAt: new Date(),
+//             },
+//             { upsert: true, new: true }
+//         );
+
+//         const price = productInfo.price ? `\n💰 মূল্য: ${productInfo.price}` : '';
+//         const code = productInfo.code ? `\n🔖 Code: ${productInfo.code}` : '';
+//         return `✅ আমি এই product টি চিনতে পেরেছি:\n📦 *${productInfo.name}*${code}${price}\n\nআপনি কি এটি order করতে চান?\n👉 Order করতে *হ্যাঁ* লিখুন\n👉 বাদ দিতে *না* লিখুন`;
+//     }
+
+//     // ── CASE 2: Text এ order intent ─────────────────────────
+//     if ((!session || ['idle', 'completed', 'cancelled'].includes(session.step)) && isOrderIntent(text)) {
+//         const product = extractProductFromText(lastAiMessage);
+
+//         session = await OrderSession.findOneAndUpdate(
+//             { senderId, channelId },
+//             {
+//                 userId, platform, step: 'collecting_size',
+//                 orderData: {
+//                     productName: product?.name || 'Product',
+//                     productCode: product?.code || '',
+//                     productPrice: product?.price || '',
+//                     productDesc: '',
+//                     productImage: '',
+//                     size: '', quantity: 1, customerName: '', address: '', phone: '',
+//                 },
+//                 lastActivityAt: new Date(),
+//             },
+//             { upsert: true, new: true }
+//         );
+
+//         const productLine = product?.name
+//             ? `\n📦 Product: *${product.name}*${product.code ? ` (Code: ${product.code})` : ''}${product.price ? ` — ${product.price}` : ''}\n`
+//             : '';
+//         return `✅ আপনার order নিচ্ছি!${productLine}\n📏 আপনার পছন্দের *size* লিখুন:\n(যেমন: S / M / L / XL / XXL / Free Size)`;
+//     }
+
+//     if (!session || ['idle', 'completed', 'cancelled'].includes(session.step)) {
+//         return null;
+//     }
+
+//     session.lastActivityAt = new Date();
+
+//     // ── CASE 3: Confirm pending ─────────────────────────────
+//     if (session.step === 'confirm_pending') {
+//         if (isCancellation(text)) {
+//             await OrderSession.deleteOne({ senderId, channelId });
+//             return '❌ Order বাদ দেওয়া হয়েছে। আর কিছু লাগলে জানান।';
+//         }
+//         if (isOrderConfirmation(text)) {
+//             session.step = 'collecting_size';
+//             await session.save();
+//             return '📏 আপনার পছন্দের *size* লিখুন:\n(যেমন: S / M / L / XL / XXL / Free Size)';
+//         }
+//         return `আপনি কি *${session.orderData.productName}* order করতে চান?\n👉 *হ্যাঁ* অথবা *না* লিখুন`;
+//     }
+
+//     // ── CASE 4: Size ────────────────────────────────────────
+//     if (session.step === 'collecting_size') {
+//         if (!text || text.trim().length < 1) {
+//             return '⚠️ আপনার size লিখুন (S / M / L / XL / XXL / Free Size):';
+//         }
+//         session.orderData.size = text.trim();
+//         session.step = 'collecting_name';
+//         await session.save();
+//         return '👤 আপনার *পুরো নাম* লিখুন:';
+//     }
+
+//     // ── CASE 5: Name ────────────────────────────────────────
+//     if (session.step === 'collecting_name') {
+//         if (!text || text.trim().length < 2) return '⚠️ সঠিক নাম লিখুন:';
+//         session.orderData.customerName = text.trim();
+//         session.step = 'collecting_address';
+//         await session.save();
+//         return '🏠 আপনার *ডেলিভারি ঠিকানা* লিখুন:\n(বাড়ি নম্বর, রোড, এলাকা, জেলা)';
+//     }
+
+//     // ── CASE 6: Address ─────────────────────────────────────
+//     if (session.step === 'collecting_address') {
+//         if (!text || text.trim().length < 5) return '⚠️ সম্পূর্ণ ঠিকানা লিখুন:';
+//         session.orderData.address = text.trim();
+//         session.step = 'collecting_phone';
+//         await session.save();
+//         return '📞 আপনার *মোবাইল নম্বর* লিখুন:';
+//     }
+
+//     // ── CASE 7: Phone → Order create ────────────────────────
+//     if (session.step === 'collecting_phone') {
+//         if (!isValidPhone(text)) return '⚠️ সঠিক মোবাইল নম্বর লিখুন (১১ সংখ্যা):';
+
+//         session.orderData.phone = text.trim().replace(/\D/g, '');
+//         session.step = 'completed';
+//         await session.save();
+
+//         const order = await Order.create({
+//             userId, channelId, platform,
+//             customer: {
+//                 senderId,
+//                 name: session.orderData.customerName,
+//                 phone: session.orderData.phone,
+//                 address: session.orderData.address,
+//                 profilePic: senderProfilePic || '',
+//             },
+//             product: {
+//                 name: session.orderData.productName,
+//                 code: session.orderData.productCode,
+//                 price: session.orderData.productPrice,
+//                 size: session.orderData.size,
+//                 quantity: session.orderData.quantity || 1,
+//                 desc: session.orderData.productDesc,
+//                 image: session.orderData.productImage,
+//             },
+//             status: 'pending',
+//             lastNotifiedStatus: 'pending',
+//         });
+
+//         // Real-time: নতুন order এসেছে
+//         emitToUser(userId, 'order:new', { order });
+
+//         submitToOMS(order, userId)
+//             .then(async (result) => {
+//                 if (result.success) {
+//                     order.omsSynced = true;
+//                     order.omsOrderId = result.data?.id || result.data?.order_id || '';
+//                     order.omsSyncedAt = new Date();
+//                 } else {
+//                     order.omsError = result.error || result.reason || 'OMS sync failed';
+//                 }
+//                 await order.save();
+//             })
+//             .catch(async (err) => {
+//                 order.omsError = err.message;
+//                 await order.save();
+//             });
+
+//         const sizeLine = order.product.size ? `\n📏 *Size:* ${order.product.size}` : '';
+//         const codeLine = order.product.code ? `\n🔖 *Code:* ${order.product.code}` : '';
+
+//         await OrderSession.deleteOne({ senderId, channelId });
+
+//         return `✅ *Order Confirmed!*
+
+// 📋 *Order ID:* ${order.orderId}
+// 👤 *নাম:* ${order.customer.name}
+// 📞 *মোবাইল:* ${order.customer.phone}
+// 🏠 *ঠিকানা:* ${order.customer.address}
+// 📦 *Product:* ${order.product.name}${codeLine}${sizeLine}${order.product.price ? `\n💰 *মূল্য:* ${order.product.price}` : ''}
+
+// আপনার order টি পেয়েছি! শীঘ্রই আমাদের টিম যোগাযোগ করবে। 🎉
+// ধন্যবাদ! 🙏`;
+//     }
+
+//     return null;
+// };
+
+// module.exports = { handleOrderFlow, isOrderIntent, isOrderConfirmation };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const OrderSession = require('../models/OrderSession.model');
 const Order = require('../models/Order.model');
+const BusinessConfig = require('../models/BusinessConfig.model');
 const { submitToOMS } = require('./oms.service');
 const { emitToUser } = require('../config/socket');
+
+// ── Helper: client এর config নাও (cache সহ default) ─────────
+async function getConfig(userId) {
+    let config = await BusinessConfig.findOne({ userId });
+    if (!config) config = await BusinessConfig.create({ userId });
+    return config;
+}
 
 const isOrderIntent = (text) => {
     if (!text) return false;
@@ -947,23 +1234,15 @@ const isOrderIntent = (text) => {
 const isOrderConfirmation = (text) => {
     if (!text) return false;
     const t = text.toLowerCase().trim();
-
-    // হ্যাঁ এর সব রকম বানান (Bangla + English + Banglish)
     const words = [
-        // Bangla
-        'হ্যাঁ', 'হ্যা', 'হা', 'হাঁ', 'হ্যাঁ চাই', 'জি', 'জী', 'হুম', 'অবশ্যই',
-        'কনফার্ম', 'দিন', 'চাই', 'নিব', 'নিবো', 'করেন', 'করুন', 'রাজি', 'আচ্ছা',
-        // English
+        'হ্যাঁ', 'হ্যা', 'হা', 'হাঁ', 'জি', 'জী', 'হুম', 'অবশ্যই', 'কনফার্ম', 'দিন',
+        'চাই', 'নিব', 'নিবো', 'করেন', 'করুন', 'রাজি', 'আচ্ছা',
         'yes', 'yeah', 'yep', 'yup', 'yah', 'ok', 'okay', 'okk', 'oki',
         'confirm', 'sure', 'fine', 'done', 'agree', 'accept', 'proceed',
-        // Banglish (যেভাবে customer লেখে)
         'hae', 'hay', 'haa', 'haah', 'haaa', 'hmm', 'hmmm', 'hm',
         'koren', 'korun', 'corbo', 'korbo', 'nibo', 'nib', 'chai', 'razi',
-        'ji', 'jee', 'accha', 'acha', 'thik ace', 'thik', 'thikache',
-        '1', 'one', '✅', '👍', '👌',
+        'ji', 'jee', 'accha', 'acha', 'thik ace', 'thik', 'thikache', '1', 'one',
     ];
-
-    // পুরো message যদি confirm শব্দের কাছাকাছি হয়
     return words.some(w => t.includes(w));
 };
 
@@ -972,12 +1251,9 @@ const isCancellation = (text) => {
     const t = text.toLowerCase().trim();
     const words = [
         'না', 'নাহ', 'নো', 'no', 'nope', 'nah', 'cancel', 'বাদ', 'বাতিল',
-        'থাক', 'থাক না', 'lagbe na', 'লাগবে না', 'lagbena', 'na', 'not',
-        'venge', 'cancel koro', 'বাদ দাও', 'দরকার নেই', 'chai na', 'চাই না',
-        '❌',
+        'থাক', 'lagbe na', 'লাগবে না', 'lagbena', 'not', 'chai na', 'চাই না', 'দরকার নেই',
     ];
-    // exact match বা শুরুতে থাকলে cancel
-    return words.some(w => t === w || t.startsWith(w + ' ') || t === w);
+    return words.some(w => t === w || t.startsWith(w + ' '));
 };
 
 const isValidPhone = (text) => {
@@ -985,23 +1261,13 @@ const isValidPhone = (text) => {
     return digits.length >= 10 && digits.length <= 15;
 };
 
-// AI message থেকে product নাম, code ও দাম extract করো
+// AI message থেকে product extract করো
 function extractProductFromText(text) {
     if (!text) return null;
-
-    const priceMatch = text.match(/(\d[\d,]{2,})\s*(টাকা|taka|tk|৳|bdt)/i)
-        || text.match(/[৳]\s*(\d[\d,]+)/);
-
-    // Product code — "1996", "Code: ABC123", "#1996"
-    const codeMatch = text.match(/(?:code|কোড|#)[:\s]*([A-Za-z0-9-]+)/i)
-        || text.match(/-\s*(\d{3,})/);   // "Kamiz 3 piece - 1996"
-
-    const nameMatch = text.match(/"([^"]+)"/)
-        || text.match(/\*([^*]+)\*/)
-        || text.match(/([A-Z][a-zA-Z]+\s+\d+\s*piece)/i);
-
+    const priceMatch = text.match(/(\d[\d,]{2,})\s*(টাকা|taka|tk|৳|bdt)/i) || text.match(/[৳]\s*(\d[\d,]+)/);
+    const codeMatch = text.match(/(?:code|কোড|#)[:\s]*([A-Za-z0-9-]+)/i) || text.match(/-\s*(\d{3,})/);
+    const nameMatch = text.match(/"([^"]+)"/) || text.match(/\*([^*]+)\*/) || text.match(/([A-Z][a-zA-Z]+\s+\d+\s*piece)/i);
     if (!nameMatch && !priceMatch && !codeMatch) return null;
-
     return {
         name: nameMatch ? nameMatch[1].trim() : 'Product',
         code: codeMatch ? codeMatch[1].trim() : '',
@@ -1009,14 +1275,37 @@ function extractProductFromText(text) {
     };
 }
 
+// ── নির্দিষ্ট field এর জন্য AI এর প্রশ্ন বানাও ───────────────
+function fieldPrompt(field) {
+    if (field.prompt) return field.prompt;
+    // prompt না থাকলে label দিয়ে বানাও
+    if (field.type === 'choice' && field.options?.length) {
+        return `আপনার পছন্দের ${field.label} লিখুন (${field.options.join(' / ')}):`;
+    }
+    return `আপনার ${field.label} লিখুন:`;
+}
+
+// ── পরের field খুঁজো যেটা এখনো collect হয়নি ─────────────────
+function getNextField(orderFields, collected) {
+    const sorted = [...orderFields].sort((a, b) => (a.order || 0) - (b.order || 0));
+    return sorted.find(f => !collected[f.key] || collected[f.key] === '');
+}
+
 // ── Main handler ─────────────────────────────────────────────
 const handleOrderFlow = async ({
     senderId, channelId, userId, platform, text,
     senderName, senderProfilePic,
     productInfo = null,
-    productImage = '',       // ← নতুন: customer এর পাঠানো image URL
+    productImage = '',
     lastAiMessage = '',
 }) => {
+
+    const config = await getConfig(userId);
+
+    // Product mode বন্ধ থাকলে order flow চলবে না
+    if (!config.productMode) return null;
+
+    const orderFields = config.orderFields?.length ? config.orderFields : [];
 
     let session = await OrderSession.findOne({ senderId, channelId });
 
@@ -1031,8 +1320,8 @@ const handleOrderFlow = async ({
                     productCode: productInfo.code || '',
                     productPrice: productInfo.price || '',
                     productDesc: productInfo.desc || '',
-                    productImage: productImage || '',     // ← image save করো
-                    size: '', quantity: 1, customerName: '', address: '', phone: '',
+                    productImage: productImage || '',
+                    customFields: {},
                 },
                 lastActivityAt: new Date(),
             },
@@ -1041,7 +1330,7 @@ const handleOrderFlow = async ({
 
         const price = productInfo.price ? `\n💰 মূল্য: ${productInfo.price}` : '';
         const code = productInfo.code ? `\n🔖 Code: ${productInfo.code}` : '';
-        return `✅ আমি এই product টি চিনতে পেরেছি:\n📦 *${productInfo.name}*${code}${price}\n\nআপনি কি এটি order করতে চান?\n👉 Order করতে *হ্যাঁ* লিখুন\n👉 বাদ দিতে *না* লিখুন`;
+        return `✅ আমি এই product টি চিনতে পেরেছি:\n📦 *${productInfo.name}*${code}${price}\n\n${config.orderConfirmPrompt}`;
     }
 
     // ── CASE 2: Text এ order intent ─────────────────────────
@@ -1051,14 +1340,13 @@ const handleOrderFlow = async ({
         session = await OrderSession.findOneAndUpdate(
             { senderId, channelId },
             {
-                userId, platform, step: 'collecting_size',
+                userId, platform, step: 'collecting_fields',
                 orderData: {
                     productName: product?.name || 'Product',
                     productCode: product?.code || '',
                     productPrice: product?.price || '',
-                    productDesc: '',
                     productImage: '',
-                    size: '', quantity: 1, customerName: '', address: '', phone: '',
+                    customFields: {},
                 },
                 lastActivityAt: new Date(),
             },
@@ -1066,9 +1354,12 @@ const handleOrderFlow = async ({
         );
 
         const productLine = product?.name
-            ? `\n📦 Product: *${product.name}*${product.code ? ` (Code: ${product.code})` : ''}${product.price ? ` — ${product.price}` : ''}\n`
+            ? `\n📦 Product: *${product.name}*${product.code ? ` (Code: ${product.code})` : ''}\n`
             : '';
-        return `✅ আপনার order নিচ্ছি!${productLine}\n📏 আপনার পছন্দের *size* লিখুন:\n(যেমন: S / M / L / XL / XXL / Free Size)`;
+
+        const firstField = getNextField(orderFields, {});
+        if (!firstField) return 'দুঃখিত, order field সেট করা নেই।';
+        return `✅ আপনার order নিচ্ছি!${productLine}\n${fieldPrompt(firstField)}`;
     }
 
     if (!session || ['idle', 'completed', 'cancelled'].includes(session.step)) {
@@ -1084,109 +1375,121 @@ const handleOrderFlow = async ({
             return '❌ Order বাদ দেওয়া হয়েছে। আর কিছু লাগলে জানান।';
         }
         if (isOrderConfirmation(text)) {
-            session.step = 'collecting_size';
+            session.step = 'collecting_fields';
             await session.save();
-            return '📏 আপনার পছন্দের *size* লিখুন:\n(যেমন: S / M / L / XL / XXL / Free Size)';
+            const firstField = getNextField(orderFields, session.orderData.customFields || {});
+            if (!firstField) return await finalizeOrder(session, config, { senderId, channelId, userId, platform, senderProfilePic });
+            return fieldPrompt(firstField);
         }
         return `আপনি কি *${session.orderData.productName}* order করতে চান?\n👉 *হ্যাঁ* অথবা *না* লিখুন`;
     }
 
-    // ── CASE 4: Size ────────────────────────────────────────
-    if (session.step === 'collecting_size') {
-        if (!text || text.trim().length < 1) {
-            return '⚠️ আপনার size লিখুন (S / M / L / XL / XXL / Free Size):';
+    // ── CASE 4: Dynamic field collection ────────────────────
+    if (session.step === 'collecting_fields') {
+        const collected = session.orderData.customFields || {};
+
+        // এই মুহূর্তে কোন field expect করছি
+        const currentField = getNextField(orderFields, collected);
+
+        if (!currentField) {
+            // সব field collect হয়েছে — order তৈরি করো
+            return await finalizeOrder(session, config, { senderId, channelId, userId, platform, senderProfilePic });
         }
-        session.orderData.size = text.trim();
-        session.step = 'collecting_name';
-        await session.save();
-        return '👤 আপনার *পুরো নাম* লিখুন:';
-    }
 
-    // ── CASE 5: Name ────────────────────────────────────────
-    if (session.step === 'collecting_name') {
-        if (!text || text.trim().length < 2) return '⚠️ সঠিক নাম লিখুন:';
-        session.orderData.customerName = text.trim();
-        session.step = 'collecting_address';
-        await session.save();
-        return '🏠 আপনার *ডেলিভারি ঠিকানা* লিখুন:\n(বাড়ি নম্বর, রোড, এলাকা, জেলা)';
-    }
+        // Validation
+        const value = (text || '').trim();
+        if (currentField.required && value.length < 1) {
+            return `⚠️ ${fieldPrompt(currentField)}`;
+        }
+        if (currentField.type === 'phone' && !isValidPhone(value)) {
+            return `⚠️ সঠিক মোবাইল নম্বর লিখুন:`;
+        }
+        if (currentField.type === 'choice' && currentField.options?.length) {
+            const matched = currentField.options.find(o => value.toLowerCase() === o.toLowerCase());
+            if (!matched && currentField.required) {
+                return `⚠️ একটি option বেছে নিন: ${currentField.options.join(' / ')}`;
+            }
+        }
 
-    // ── CASE 6: Address ─────────────────────────────────────
-    if (session.step === 'collecting_address') {
-        if (!text || text.trim().length < 5) return '⚠️ সম্পূর্ণ ঠিকানা লিখুন:';
-        session.orderData.address = text.trim();
-        session.step = 'collecting_phone';
-        await session.save();
-        return '📞 আপনার *মোবাইল নম্বর* লিখুন:';
-    }
-
-    // ── CASE 7: Phone → Order create ────────────────────────
-    if (session.step === 'collecting_phone') {
-        if (!isValidPhone(text)) return '⚠️ সঠিক মোবাইল নম্বর লিখুন (১১ সংখ্যা):';
-
-        session.orderData.phone = text.trim().replace(/\D/g, '');
-        session.step = 'completed';
+        // Save এই field
+        collected[currentField.key] = currentField.type === 'phone' ? value.replace(/\D/g, '') : value;
+        session.orderData.customFields = collected;
+        session.markModified('orderData.customFields');
         await session.save();
 
-        const order = await Order.create({
-            userId, channelId, platform,
-            customer: {
-                senderId,
-                name: session.orderData.customerName,
-                phone: session.orderData.phone,
-                address: session.orderData.address,
-                profilePic: senderProfilePic || '',
-            },
-            product: {
-                name: session.orderData.productName,
-                code: session.orderData.productCode,
-                price: session.orderData.productPrice,
-                size: session.orderData.size,
-                quantity: session.orderData.quantity || 1,
-                desc: session.orderData.productDesc,
-                image: session.orderData.productImage,
-            },
-            status: 'pending',
-            lastNotifiedStatus: 'pending',
-        });
-
-        // Real-time: নতুন order এসেছে
-        emitToUser(userId, 'order:new', { order });
-
-        submitToOMS(order, userId)
-            .then(async (result) => {
-                if (result.success) {
-                    order.omsSynced = true;
-                    order.omsOrderId = result.data?.id || result.data?.order_id || '';
-                    order.omsSyncedAt = new Date();
-                } else {
-                    order.omsError = result.error || result.reason || 'OMS sync failed';
-                }
-                await order.save();
-            })
-            .catch(async (err) => {
-                order.omsError = err.message;
-                await order.save();
-            });
-
-        const sizeLine = order.product.size ? `\n📏 *Size:* ${order.product.size}` : '';
-        const codeLine = order.product.code ? `\n🔖 *Code:* ${order.product.code}` : '';
-
-        await OrderSession.deleteOne({ senderId, channelId });
-
-        return `✅ *Order Confirmed!*
-
-📋 *Order ID:* ${order.orderId}
-👤 *নাম:* ${order.customer.name}
-📞 *মোবাইল:* ${order.customer.phone}
-🏠 *ঠিকানা:* ${order.customer.address}
-📦 *Product:* ${order.product.name}${codeLine}${sizeLine}${order.product.price ? `\n💰 *মূল্য:* ${order.product.price}` : ''}
-
-আপনার order টি পেয়েছি! শীঘ্রই আমাদের টিম যোগাযোগ করবে। 🎉
-ধন্যবাদ! 🙏`;
+        // পরের field
+        const nextField = getNextField(orderFields, collected);
+        if (!nextField) {
+            return await finalizeOrder(session, config, { senderId, channelId, userId, platform, senderProfilePic });
+        }
+        return fieldPrompt(nextField);
     }
 
     return null;
 };
+
+// ── Order finalize করো ──────────────────────────────────────
+async function finalizeOrder(session, config, ctx) {
+    const { senderId, channelId, userId, platform, senderProfilePic } = ctx;
+    const collected = session.orderData.customFields || {};
+
+    session.step = 'completed';
+    await session.save();
+
+    // Standard field গুলো খুঁজে নাও (name, address, phone)
+    const name = collected.name || collected.customer_name || senderProfilePic?.name || 'Customer';
+    const phone = collected.phone || '';
+    const address = collected.address || '';
+
+    const order = await Order.create({
+        userId, channelId, platform,
+        customer: {
+            senderId,
+            name, phone, address,
+            profilePic: typeof senderProfilePic === 'string' ? senderProfilePic : '',
+        },
+        product: {
+            name: session.orderData.productName,
+            code: session.orderData.productCode,
+            price: session.orderData.productPrice,
+            size: collected.size || '',
+            image: session.orderData.productImage,
+            desc: session.orderData.productDesc,
+        },
+        customFields: collected,   // সব custom field এখানে
+        status: 'pending',
+        lastNotifiedStatus: 'pending',
+    });
+
+    emitToUser(userId, 'order:new', { order });
+
+    submitToOMS(order, userId)
+        .then(async (result) => {
+            if (result.success) {
+                order.omsSynced = true;
+                order.omsOrderId = result.data?.id || result.data?.order_id || '';
+                order.omsSyncedAt = new Date();
+            } else {
+                order.omsError = result.error || 'OMS sync failed';
+            }
+            await order.save();
+        })
+        .catch(async (err) => { order.omsError = err.message; await order.save(); });
+
+    await OrderSession.deleteOne({ senderId, channelId });
+
+    // Order summary বানাও — সব collected field দেখাও
+    let summary = `✅ *Order Confirmed!*\n\n📋 *Order ID:* ${order.orderId}\n📦 *Product:* ${order.product.name}`;
+    if (order.product.code) summary += `\n🔖 *Code:* ${order.product.code}`;
+
+    for (const field of (config.orderFields || [])) {
+        const val = collected[field.key];
+        if (val) summary += `\n${field.label}: ${val}`;
+    }
+    if (order.product.price) summary += `\n💰 *মূল্য:* ${order.product.price}`;
+
+    summary += `\n\n${config.orderSuccessMessage}`;
+    return summary;
+}
 
 module.exports = { handleOrderFlow, isOrderIntent, isOrderConfirmation };
