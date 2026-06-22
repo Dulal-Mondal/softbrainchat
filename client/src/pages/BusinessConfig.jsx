@@ -37,14 +37,20 @@ export default function BusinessConfig() {
 
     const load = async () => {
         try {
-            const { data } = await api.get('/business-config');
-            // API থেকে আসা config এর সাথে default merge করো (missing field এড়াতে)
-            setConfig({ ...DEFAULT_CONFIG, ...data.config });
+            const res = await api.get('/business-config');
+            // api service সরাসরি response data দেয় → res.config
+            // (fallback: res.data.config যদি plain axios হয়)
+            const loaded = res?.config || res?.data?.config || null;
+            if (loaded && typeof loaded === 'object') {
+                setConfig({ ...DEFAULT_CONFIG, ...loaded });
+            } else {
+                setConfig(DEFAULT_CONFIG);
+            }
             setLoadError('');
         } catch (err) {
             console.error('Business config load failed:', err);
             setLoadError(err.response?.data?.message || err.message || 'Config load করা যায়নি');
-            // fail করলেও default config থাকবে — page blank হবে না
+            setConfig(DEFAULT_CONFIG);
         } finally {
             setLoading(false);
         }
@@ -53,8 +59,11 @@ export default function BusinessConfig() {
     const save = async () => {
         setSaving(true);
         try {
-            const { data } = await api.patch('/business-config', config);
-            setConfig({ ...DEFAULT_CONFIG, ...data.config });
+            const res = await api.patch('/business-config', config);
+            const saved = res?.config || res?.data?.config || null;
+            if (saved && typeof saved === 'object') {
+                setConfig({ ...DEFAULT_CONFIG, ...saved });
+            }
             toast.success('✅ Configuration saved!');
         } catch (err) {
             toast.error(err.response?.data?.message || err.message);
