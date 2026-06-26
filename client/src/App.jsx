@@ -248,6 +248,7 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import ForgotPassword from './pages/ForgotPassword';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Chat = lazy(() => import('./pages/Chat'));
@@ -296,6 +297,7 @@ export default function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/api-docs" element={<ApiDocs />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
 
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
