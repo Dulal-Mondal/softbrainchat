@@ -23,12 +23,12 @@
 
 // module.exports = router;
 
-const router = require('express').Router();
-const orderCtrl = require('../controllers/order.controller');
-const omsConfigCtrl = require('../controllers/omsConfig.controller');
-const authMW = require('../middlewares/auth.middleware');
+// const router = require('express').Router();
+// const orderCtrl = require('../controllers/order.controller');
+// const omsConfigCtrl = require('../controllers/omsConfig.controller');
+// const authMW = require('../middlewares/auth.middleware');
 
-router.use(authMW);
+// router.use(authMW);
 
 // ⚠️ গুরুত্বপূর্ণ — specific route গুলো আগে রাখতে হবে,
 // নাহলে /:orderId সব কিছুকে orderId ভেবে নেবে
