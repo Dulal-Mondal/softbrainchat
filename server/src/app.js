@@ -330,6 +330,7 @@ app.use('/api/admin', require('./routes/admin.routes'));
 app.use('/api/billing', require('./routes/billing.routes'));
 app.use('/api/orders', require('./routes/order.routes'));     // ← Dashboard order management
 app.use('/api/business-config', require('./routes/businessConfig.routes'));
+app.use('/api/conversations', require('./routes/conversation.routes'));
 
 // ── Public OMS API ────────────────────────────────────────────
 // External OMS software এই endpoint call করবে
