@@ -62,8 +62,6 @@ const authMW = require('../middlewares/auth.middleware');
 
 router.use(authMW);
 
-// ⚠️ গুরুত্বপূর্ণ — specific route গুলো আগে রাখতে হবে,
-// নাহলে /:orderId সব কিছুকে orderId ভেবে নেবে
 
 // ── API Keys (OMS software দেওয়ার জন্য) ─────────────────────
 router.get('/api-keys', orderCtrl.getApiKeys);
