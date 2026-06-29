@@ -15,6 +15,7 @@ export default function MetaApiForm({ onSuccess, onCancel }) {
     const [appSecret, setAppSecret] = useState('');
     const [accessToken, setAccessToken] = useState('');
     const [phoneNumberId, setPhoneNumberId] = useState('');
+    const [wabaId, setWabaId] = useState('');
     const [pageId, setPageId] = useState('');
     const [loading, setLoading] = useState(false);
     const [created, setCreated] = useState(null); // webhook info দেখাবো
@@ -25,7 +26,7 @@ export default function MetaApiForm({ onSuccess, onCancel }) {
         try {
             const data = await metaService.addChannel({
                 platform, name, appId, appSecret, accessToken,
-                ...(platform === 'whatsapp' ? { phoneNumberId } : { pageId }),
+                ...(platform === 'whatsapp' ? { phoneNumberId, wabaId } : { pageId }),
             });
             setCreated(data.channel);
             toast.success('Channel added successfully!');
@@ -137,11 +138,27 @@ export default function MetaApiForm({ onSuccess, onCancel }) {
 
             {/* Platform-specific fields */}
             {platform === 'whatsapp' && (
-                <div style={{ marginBottom: 12 }}>
-                    <label style={labelStyle}>Phone Number ID</label>
-                    <input value={phoneNumberId} onChange={e => setPhoneNumberId(e.target.value)} required
-                        placeholder="WhatsApp Phone Number ID" style={inputStyle} />
-                </div>
+                <>
+                    <div style={{ marginBottom: 12 }}>
+                        <label style={labelStyle}>Phone Number ID</label>
+                        <input value={phoneNumberId} onChange={e => setPhoneNumberId(e.target.value)} required
+                            placeholder="WhatsApp Phone Number ID" style={inputStyle} />
+                    </div>
+
+                    {/* WABA ID — Template broadcast এর জন্য দরকার */}
+                    <div style={{ marginBottom: 12 }}>
+                        <label style={labelStyle}>
+                            WhatsApp Business Account ID (WABA ID)
+                            <span style={{ color: 'var(--text-3)', fontWeight: 400 }}> — Template এর জন্য</span>
+                        </label>
+                        <input value={wabaId} onChange={e => setWabaId(e.target.value)}
+                            placeholder="WABA ID (Broadcast template এর জন্য)" style={inputStyle} />
+                        <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4, lineHeight: 1.5 }}>
+                            💡 Meta Console → WhatsApp → API Setup এ "WhatsApp Business Account ID" পাবেন।
+                            Template broadcast পাঠাতে এটা দরকার।
+                        </div>
+                    </div>
+                </>
             )}
 
             {(platform === 'messenger' || platform === 'instagram') && (
