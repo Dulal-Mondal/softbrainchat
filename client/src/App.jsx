@@ -263,6 +263,8 @@ const Inbox = lazy(() => import('./pages/Inbox'));
 const Agents = lazy(() => import('./pages/Agents'));
 const Broadcast = lazy(() => import('./pages/Broadcast'));
 const ImportContacts = lazy(() => import('./pages/ImportContacts'));
+const CrmTable = lazy(() => import('./pages/CrmTable'));
+const CrmSetup = lazy(() => import('./pages/CrmSetup'));
 
 
 function PageLoader() {
@@ -316,6 +318,8 @@ export default function App() {
                   <Route path="/agents" element={<Agents />} />
                   <Route path="/broadcast" element={<Broadcast />} />
                   <Route path="/import-contacts" element={<ImportContacts />} />
+                  <Route path="/crm" element={<CrmTable />} />
+                  <Route path="/crm-setup" element={<CrmSetup />} />
                 </Route>
 
                 {/* 404 */}

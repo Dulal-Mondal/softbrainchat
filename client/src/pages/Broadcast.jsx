@@ -13,6 +13,13 @@ export default function Broadcast() {
     const [sending, setSending] = useState(false);
     const [progress, setProgress] = useState(null);
 
+    // ── Template mode ──
+    const [mode, setMode] = useState('text');   // 'text' | 'template'
+    const [templates, setTemplates] = useState([]);
+    const [loadingTpl, setLoadingTpl] = useState(false);
+    const [selectedTpl, setSelectedTpl] = useState(null);
+    const [tplVars, setTplVars] = useState({});   // { "1": "name", "2": "fixed text" }
+
     useEffect(() => { loadData(); }, []);
 
     const loadData = async () => {
@@ -28,7 +35,35 @@ export default function Broadcast() {
         } catch (err) { toast.error(err.message); }
     };
 
-    // Real-time progress
+    // selected channel
+    const channel = channels.find(c => c._id === form.channelId);
+    const isWhatsApp = channel?.platform === 'whatsapp';
+
+    // WhatsApp channel select করলে template load করো
+    const loadTemplates = async () => {
+        if (!form.channelId) { toast.error('Channel select করুন'); return; }
+        setLoadingTpl(true);
+        try {
+            const res = await api.get(`/templates/${form.channelId}`);
+            setTemplates(res.templates || res.data?.templates || []);
+            if ((res.templates || res.data?.templates || []).length === 0) {
+                toast('কোনো approved template নেই', { icon: 'ℹ️' });
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || err.message);
+        } finally { setLoadingTpl(false); }
+    };
+
+    const selectTemplate = (tpl) => {
+        setSelectedTpl(tpl);
+        // variable গুলোর default mapping বানাও
+        const vars = {};
+        for (let i = 1; i <= tpl.variableCount; i++) {
+            vars[i] = i === 1 ? 'name' : '';   // প্রথমটা name ধরে নাও
+        }
+        setTplVars(vars);
+    };
+
     useSocketEvent('broadcast:progress', (data) => setProgress(data));
     useSocketEvent('broadcast:done', (data) => {
         setProgress(null);
@@ -44,17 +79,40 @@ export default function Broadcast() {
         } catch (err) { toast.error(err.message); }
     };
 
-    const send = async () => {
+    // ── Text broadcast ──
+    const sendText = async () => {
         if (!form.message.trim()) { toast.error('Message লিখুন'); return; }
-        if (!form.channelId) { toast.error('Channel select করুন'); return; }
         if (!confirm(`${preview ?? '?'} জনকে message পাঠাবেন?`)) return;
-
         setSending(true);
         setProgress({ sent: 0, failed: 0, total: preview });
         try {
             await api.post('/broadcasts', form);
             toast.success('📤 Broadcast শুরু হয়েছে!');
-            setForm({ name: '', message: '', channelId: form.channelId, targetTag: '' });
+            setForm({ ...form, name: '', message: '' });
+            setPreview(null);
+        } catch (err) {
+            toast.error(err.response?.data?.message || err.message);
+            setProgress(null);
+        } finally { setSending(false); }
+    };
+
+    // ── Template broadcast ──
+    const sendTemplateBroadcast = async () => {
+        if (!selectedTpl) { toast.error('Template select করুন'); return; }
+        if (!confirm(`${preview ?? '?'} জনকে template পাঠাবেন?`)) return;
+        setSending(true);
+        setProgress({ sent: 0, failed: 0, total: preview });
+        try {
+            await api.post('/templates/broadcast', {
+                name: form.name,
+                channelId: form.channelId,
+                targetTag: form.targetTag,
+                templateName: selectedTpl.name,
+                language: selectedTpl.language,
+                variableMapping: tplVars,
+            });
+            toast.success('📤 Template broadcast শুরু হয়েছে!');
+            setSelectedTpl(null);
             setPreview(null);
         } catch (err) {
             toast.error(err.response?.data?.message || err.message);
@@ -90,7 +148,7 @@ export default function Broadcast() {
 
                     <div style={{ marginBottom: 14 }}>
                         <label style={label}>Channel</label>
-                        <select style={input} value={form.channelId} onChange={e => { setForm({ ...form, channelId: e.target.value }); setPreview(null); }}>
+                        <select style={input} value={form.channelId} onChange={e => { setForm({ ...form, channelId: e.target.value }); setPreview(null); setSelectedTpl(null); setTemplates([]); }}>
                             <option value="">— Channel select করুন —</option>
                             {channels.map(c => <option key={c._id} value={c._id}>{c.name} ({c.platform})</option>)}
                         </select>
@@ -104,29 +162,103 @@ export default function Broadcast() {
                         </select>
                     </div>
 
-                    <div style={{ marginBottom: 14 }}>
-                        <label style={label}>Message</label>
-                        <textarea style={{ ...input, minHeight: 120, resize: 'vertical' }} value={form.message}
-                            onChange={e => setForm({ ...form, message: e.target.value })}
-                            placeholder="আপনার message লিখুন..." />
-                    </div>
+                    {/* ── Mode toggle (WhatsApp হলে) ── */}
+                    {isWhatsApp && (
+                        <div style={{ display: 'flex', gap: 8, marginBottom: 16, padding: 4, background: 'var(--bg-tertiary)', borderRadius: 8 }}>
+                            <button onClick={() => setMode('text')}
+                                style={{
+                                    flex: 1, padding: '8px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                                    background: mode === 'text' ? 'var(--accent)' : 'transparent', color: mode === 'text' ? '#fff' : 'var(--text-2)'
+                                }}>
+                                💬 Text (active only)
+                            </button>
+                            <button onClick={() => { setMode('template'); if (templates.length === 0) loadTemplates(); }}
+                                style={{
+                                    flex: 1, padding: '8px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                                    background: mode === 'template' ? 'var(--accent)' : 'transparent', color: mode === 'template' ? '#fff' : 'var(--text-2)'
+                                }}>
+                                📋 Template (সবাইকে)
+                            </button>
+                        </div>
+                    )}
 
-                    {/* Preview + Send */}
+                    {/* ── TEXT MODE ── */}
+                    {(!isWhatsApp || mode === 'text') && (
+                        <div style={{ marginBottom: 14 }}>
+                            <label style={label}>Message</label>
+                            <textarea style={{ ...input, minHeight: 120, resize: 'vertical' }} value={form.message}
+                                onChange={e => setForm({ ...form, message: e.target.value })}
+                                placeholder="আপনার message লিখুন..." />
+                        </div>
+                    )}
+
+                    {/* ── TEMPLATE MODE ── */}
+                    {isWhatsApp && mode === 'template' && (
+                        <div style={{ marginBottom: 14 }}>
+                            <label style={label}>Approved Template</label>
+                            {loadingTpl ? (
+                                <div style={{ fontSize: 12, color: 'var(--text-3)', padding: 10 }}>Template load হচ্ছে...</div>
+                            ) : templates.length === 0 ? (
+                                <div style={{ fontSize: 11, color: 'var(--orange)', padding: 10, background: 'var(--orange-dim)', borderRadius: 8, lineHeight: 1.6 }}>
+                                    কোনো approved template নেই। Meta Business Manager → WhatsApp → Message Templates এ template তৈরি ও approve করান।
+                                    <button onClick={loadTemplates} style={{ display: 'block', marginTop: 8, background: 'none', border: '1px solid var(--orange)', color: 'var(--orange)', padding: '4px 10px', borderRadius: 6, cursor: 'pointer', fontSize: 11 }}>🔄 আবার চেষ্টা</button>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    {templates.map(tpl => (
+                                        <div key={tpl.name} onClick={() => selectTemplate(tpl)}
+                                            style={{
+                                                padding: 12, borderRadius: 8, cursor: 'pointer',
+                                                border: `1px solid ${selectedTpl?.name === tpl.name ? 'var(--accent)' : 'var(--border)'}`,
+                                                background: selectedTpl?.name === tpl.name ? 'var(--accent-dim)' : 'var(--bg-tertiary)'
+                                            }}>
+                                            <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
+                                                {tpl.name} <span style={{ fontSize: 10, color: 'var(--text-3)' }}>({tpl.language} · {tpl.category})</span>
+                                            </div>
+                                            <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.5 }}>{tpl.bodyText}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Variable mapping */}
+                            {selectedTpl && selectedTpl.variableCount > 0 && (
+                                <div style={{ marginTop: 14, padding: 12, background: 'var(--bg-tertiary)', borderRadius: 8 }}>
+                                    <div style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 10 }}>
+                                        Variable গুলোতে কী বসবে:
+                                    </div>
+                                    {Array.from({ length: selectedTpl.variableCount }, (_, i) => i + 1).map(num => (
+                                        <div key={num} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                                            <span style={{ fontSize: 12, color: 'var(--accent-2)', fontWeight: 600, minWidth: 36 }}>{`{{${num}}}`}</span>
+                                            <select style={{ ...input, padding: '6px 10px' }} value={tplVars[num] || ''} onChange={e => setTplVars({ ...tplVars, [num]: e.target.value })}>
+                                                <option value="name">Contact এর নাম</option>
+                                                <option value="phone">Contact এর phone</option>
+                                                <option value="">✏️ Fixed text লিখব</option>
+                                            </select>
+                                            {tplVars[num] !== 'name' && tplVars[num] !== 'phone' && (
+                                                <input style={{ ...input, padding: '6px 10px', flex: 1 }} placeholder="text..." value={tplVars[num] || ''} onChange={e => setTplVars({ ...tplVars, [num]: e.target.value })} />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Preview */}
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <button onClick={doPreview} className="btn btn-outline btn-sm">👁 Preview recipients</button>
-                        {preview !== null && (
-                            <span style={{ fontSize: 13, color: 'var(--accent-2)', fontWeight: 600 }}>
-                                {preview} জন recipient
-                            </span>
-                        )}
+                        {preview !== null && <span style={{ fontSize: 13, color: 'var(--accent-2)', fontWeight: 600 }}>{preview} জন</span>}
                     </div>
 
-                    <button onClick={send} disabled={sending || !!progress} className="btn btn-primary"
+                    {/* Send button */}
+                    <button onClick={isWhatsApp && mode === 'template' ? sendTemplateBroadcast : sendText}
+                        disabled={sending || !!progress} className="btn btn-primary"
                         style={{ width: '100%', marginTop: 16, padding: 12 }}>
-                        {progress ? 'পাঠানো হচ্ছে...' : '📤 Broadcast পাঠান'}
+                        {progress ? 'পাঠানো হচ্ছে...' : (isWhatsApp && mode === 'template' ? '📋 Template পাঠান' : '📤 Broadcast পাঠান')}
                     </button>
 
-                    {/* Live progress */}
+                    {/* Progress */}
                     {progress && (
                         <div style={{ marginTop: 16, padding: 14, background: 'var(--bg-tertiary)', borderRadius: 8 }}>
                             <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 8 }}>
@@ -142,8 +274,11 @@ export default function Broadcast() {
                         </div>
                     )}
 
-                    <div style={{ marginTop: 14, padding: 10, background: 'var(--orange-dim)', borderRadius: 8, fontSize: 11, color: 'var(--orange)', lineHeight: 1.6 }}>
-                        ⚠️ WhatsApp এ ২৪ ঘণ্টার বেশি আগে যোগাযোগ করা customer দের template ছাড়া message যাবে না। Messenger/Instagram এ active customer দের যাবে।
+                    {/* Info */}
+                    <div style={{ marginTop: 14, padding: 10, background: mode === 'template' ? 'var(--green-dim)' : 'var(--orange-dim)', borderRadius: 8, fontSize: 11, color: mode === 'template' ? 'var(--green)' : 'var(--orange)', lineHeight: 1.6 }}>
+                        {isWhatsApp && mode === 'template'
+                            ? '✅ Template যেকোনো number এ যাবে (imported সহ), কারণ Meta approved।'
+                            : '⚠️ Text শুধু ২৪ ঘণ্টার মধ্যে active customer দের যাবে। নতুন/imported number এ Template ব্যবহার করুন।'}
                     </div>
                 </div>
 
@@ -163,7 +298,7 @@ export default function Broadcast() {
                                         <span style={{
                                             fontSize: 10, padding: '2px 8px', borderRadius: 6,
                                             background: b.status === 'completed' ? 'var(--green-dim)' : b.status === 'sending' ? 'var(--orange-dim)' : 'var(--bg-tertiary)',
-                                            color: b.status === 'completed' ? 'var(--green)' : b.status === 'sending' ? 'var(--orange)' : 'var(--text-3)',
+                                            color: b.status === 'completed' ? 'var(--green)' : b.status === 'sending' ? 'var(--orange)' : 'var(--text-3)'
                                         }}>{b.status}</span>
                                     </div>
                                     <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
