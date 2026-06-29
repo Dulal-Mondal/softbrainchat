@@ -261,6 +261,7 @@ const ApiDocs = lazy(() => import('./pages/ApiDocs'));
 const BusinessConfig = lazy(() => import('./pages/BusinessConfig'));
 const Inbox = lazy(() => import('./pages/Inbox'));
 const Agents = lazy(() => import('./pages/Agents'));
+const Broadcast = lazy(() => import('./pages/Broadcast'));
 
 
 function PageLoader() {
@@ -312,6 +313,7 @@ export default function App() {
                   <Route path="/business-setup" element={<BusinessConfig />} />
                   <Route path="/inbox" element={<Inbox />} />
                   <Route path="/agents" element={<Agents />} />
+                  <Route path="/broadcast" element={<Broadcast />} />
                 </Route>
 
                 {/* 404 */}

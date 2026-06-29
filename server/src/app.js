@@ -334,6 +334,7 @@ app.use('/api/conversations', require('./routes/conversation.routes'));
 
 app.use('/api/contacts', require('./routes/contact.routes'));
 app.use('/api/agents', require('./routes/agent.routes'));
+app.use('/api/broadcasts', require('./routes/broadcast.routes'));
 
 // ── Public OMS API ────────────────────────────────────────────
 // External OMS software এই endpoint call করবে
