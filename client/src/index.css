@@ -6,40 +6,41 @@
    SoftBrainChat — Global Design System
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap');
+/* Fonts: Inter (UI), Syne (headings/display), DM Mono (code/IDs) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=Syne:wght@600;700;800&family=DM+Mono:wght@400;500&display=swap');
 
-/* ---------- Theme Tokens ---------- */
+/* ---------- Theme Tokens (DARK — default) ---------- */
 :root {
   /* Surfaces */
-  --bg-primary: #0a0c10;
-  --bg-secondary: #12151c;
-  --bg-tertiary: #1a1e27;
-  --bg-elevated: #1e2330;
+  --bg-primary: #0b0d12;
+  --bg-secondary: #13161e;
+  --bg-tertiary: #1a1e28;
+  --bg-elevated: #1f2430;
 
   /* Borders */
-  --border: #232936;
+  --border: #222834;
   --border-2: #2d3441;
   --border-focus: #3b82f6;
 
   /* Text */
-  --text: #e8eaed;
-  --text-2: #9aa3b2;
-  --text-3: #5f6878;
+  --text: #eceef2;
+  --text-2: #a3acba;
+  --text-3: #6b7484;
 
   /* Accent (blue) */
   --accent: #3b82f6;
   --accent-2: #60a5fa;
-  --accent-dim: rgba(59, 130, 246, 0.12);
+  --accent-dim: rgba(59, 130, 246, 0.14);
 
   /* Status colors */
   --green: #34d399;
-  --green-dim: rgba(52, 211, 153, 0.12);
+  --green-dim: rgba(52, 211, 153, 0.14);
   --orange: #fb923c;
-  --orange-dim: rgba(251, 146, 60, 0.12);
+  --orange-dim: rgba(251, 146, 60, 0.14);
   --red: #f87171;
-  --red-dim: rgba(248, 113, 113, 0.12);
+  --red-dim: rgba(248, 113, 113, 0.14);
   --purple: #a78bfa;
-  --purple-dim: rgba(167, 139, 250, 0.12);
+  --purple-dim: rgba(167, 139, 250, 0.14);
 
   /* Effects */
   --radius: 10px;
@@ -50,24 +51,35 @@
   --transition: 160ms cubic-bezier(.4, 0, .2, 1);
 
   /* Fonts */
-  --font-sans: 'Inter', Arial, 'Helvetica Neue', Helvetica, sans-serif;
-  --font-mono: 'SF Mono', 'DM Mono', 'Roboto Mono', Consolas, monospace;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Syne', 'Inter', sans-serif;
+  --font-mono: 'DM Mono', 'SF Mono', 'Roboto Mono', Consolas, monospace;
 }
 
-/* Light mode */
+/* ---------- Light mode ---------- */
 :root.light {
-  --bg-primary: #f7f8fa;
+  --bg-primary: #f6f8fb;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #f1f3f6;
+  --bg-tertiary: #eef1f6;
   --bg-elevated: #ffffff;
-  --border: #e3e7ed;
-  --border-2: #d4dae3;
-  --text: #1a1f2b;
-  --text-2: #59616f;
-  --text-3: #8b93a3;
-  --accent-dim: rgba(59, 130, 246, 0.08);
-  --shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04);
-  --shadow-lg: 0 10px 30px rgba(0, 0, 0, .1);
+  --border: #e4e8ef;
+  --border-2: #d2d9e3;
+  --text: #14181f;
+  --text-2: #4f5763;
+  --text-3: #858d9b;
+  --accent: #2563eb;
+  --accent-2: #2563eb;
+  --accent-dim: rgba(37, 99, 235, 0.09);
+  --green: #059669;
+  --green-dim: rgba(5, 150, 105, 0.10);
+  --orange: #ea7c1c;
+  --orange-dim: rgba(234, 124, 28, 0.10);
+  --red: #dc2626;
+  --red-dim: rgba(220, 38, 38, 0.09);
+  --purple: #7c3aed;
+  --purple-dim: rgba(124, 58, 237, 0.09);
+  --shadow: 0 1px 3px rgba(0, 0, 0, .07), 0 1px 2px rgba(0, 0, 0, .04);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, .09);
 }
 
 /* ---------- Reset ---------- */
@@ -94,19 +106,20 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.006em;
+  transition: background var(--transition), color var(--transition);
 }
 
-/* Headings keep the same family — clean & consistent */
+/* Display headings use Syne — distinct but clean */
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-sans);
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: 1.25;
+  line-height: 1.22;
   color: var(--text);
 }
 
@@ -138,7 +151,7 @@ pre,
 }
 
 /* ============================================================
-   FORM INPUTS — clear, legible, professional
+   FORM INPUTS
    ============================================================ */
 .input,
 input[type="text"],
@@ -171,7 +184,6 @@ textarea {
   line-height: 1.6;
 }
 
-/* Placeholder — softer but readable */
 .input::placeholder,
 input::placeholder,
 textarea::placeholder {
@@ -180,7 +192,6 @@ textarea::placeholder {
   opacity: 1;
 }
 
-/* Focus state — clear visual feedback */
 .input:focus,
 input:focus,
 textarea:focus,
@@ -190,7 +201,6 @@ select:focus {
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
-/* Hover */
 .input:hover:not(:focus),
 input:hover:not(:focus),
 textarea:hover:not(:focus),
@@ -199,7 +209,6 @@ select:hover:not(:focus) {
   background: var(--bg-elevated);
 }
 
-/* Disabled */
 .input:disabled,
 input:disabled,
 textarea:disabled,
@@ -208,7 +217,6 @@ select:disabled {
   cursor: not-allowed;
 }
 
-/* Select dropdown arrow */
 select {
   appearance: none;
   -webkit-appearance: none;
@@ -219,7 +227,6 @@ select {
   cursor: pointer;
 }
 
-/* Form labels */
 label {
   font-size: 13px;
   font-weight: 500;
@@ -264,7 +271,6 @@ label {
   padding: 13px 24px;
 }
 
-/* Primary */
 .btn-primary {
   background: var(--accent);
   color: #fff;
@@ -272,15 +278,13 @@ label {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #2f74e8;
-  border-color: #2f74e8;
+  filter: brightness(1.08);
 }
 
 .btn-primary:active:not(:disabled) {
   transform: translateY(0.5px);
 }
 
-/* Outline */
 .btn-outline {
   background: transparent;
   color: var(--text);
@@ -292,7 +296,6 @@ label {
   border-color: var(--text-3);
 }
 
-/* Danger */
 .btn-danger {
   background: var(--red-dim);
   color: var(--red);
@@ -300,10 +303,9 @@ label {
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: rgba(248, 113, 113, 0.2);
+  filter: brightness(1.1);
 }
 
-/* Ghost */
 .btn-ghost {
   background: transparent;
   color: var(--text-2);
@@ -323,6 +325,7 @@ label {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 22px;
+  box-shadow: var(--shadow);
   transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
 }
 
@@ -335,9 +338,9 @@ label {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
+  box-shadow: var(--shadow);
 }
 
-/* Quick-access cards (clickable) */
 a.card:hover {
   border-color: var(--accent);
   transform: translateY(-2px);
@@ -479,13 +482,11 @@ a:hover {
   text-decoration: underline;
 }
 
-/* Selection */
 ::selection {
   background: var(--accent-dim);
   color: var(--text);
 }
 
-/* Focus visible for accessibility */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
