@@ -76,7 +76,10 @@ export default function Broadcast() {
                     <h1 style={{ fontFamily: 'Syne', fontSize: 24, fontWeight: 700 }}>📢 Broadcast</h1>
                     <p style={{ color: 'var(--text-2)', fontSize: 13, marginTop: 4 }}>একসাথে অনেক customer কে message পাঠান</p>
                 </div>
-                <Link to="/dashboard" className="btn btn-outline btn-sm">← Dashboard</Link>
+                <div style={{ display: 'flex', gap: 10 }}>
+                    <Link to="/import-contacts" className="btn btn-primary btn-sm">📥 Import Contacts</Link>
+                    <Link to="/dashboard" className="btn btn-outline btn-sm">← Dashboard</Link>
+                </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: 1000 }}>
