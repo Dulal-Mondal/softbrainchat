@@ -14,6 +14,7 @@ export default function Dashboard() {
         { icon: '⚙️', label: 'Settings', sub: 'Model & KB', link: '/settings' },
         { icon: '💳', label: 'Billing', sub: 'Plan & payment', link: '/billing' },
         { icon: '📥', label: 'Inbox', sub: 'All conversations', link: '/inbox' },
+        { icon: '👥', label: 'Team / Agents', sub: 'Manage staff', link: '/agents' },
     ];
 
     const usedPct = limits.messagesPerMonth === Infinity

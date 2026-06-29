@@ -260,6 +260,7 @@ const Orders = lazy(() => import('./pages/Orders'));
 const ApiDocs = lazy(() => import('./pages/ApiDocs'));
 const BusinessConfig = lazy(() => import('./pages/BusinessConfig'));
 const Inbox = lazy(() => import('./pages/Inbox'));
+const Agents = lazy(() => import('./pages/Agents'));
 
 
 function PageLoader() {
@@ -310,6 +311,7 @@ export default function App() {
                   <Route path="/orders" element={<Orders />} />
                   <Route path="/business-setup" element={<BusinessConfig />} />
                   <Route path="/inbox" element={<Inbox />} />
+                  <Route path="/agents" element={<Agents />} />
                 </Route>
 
                 {/* 404 */}
