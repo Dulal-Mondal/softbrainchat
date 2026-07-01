@@ -11,8 +11,9 @@ export default function Landing() {
             {/* ══════════ NAVBAR ══════════ */}
             <nav style={{
                 position: 'sticky', top: 0, zIndex: 100,
-                background: 'rgba(11,13,18,0.85)', backdropFilter: 'blur(12px)',
+                background: 'var(--bg-secondary)',
                 borderBottom: '1px solid var(--border)',
+                boxShadow: 'var(--shadow)',
             }}>
                 <div style={{ maxWidth: 1200, margin: '0 auto', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -25,7 +26,7 @@ export default function Landing() {
                         ) : (
                             <>
                                 <Link to="/login" className="btn btn-ghost btn-sm">লগইন</Link>
-                                <Link to="/register" className="btn btn-primary btn-sm">ফ্রি শুরু করুন →</Link>
+                                <Link to="/register" className="btn btn-primary btn-sm">Lets Create→</Link>
                             </>
                         )}
                     </div>
@@ -39,7 +40,7 @@ export default function Landing() {
 
                 <div style={{ maxWidth: 900, margin: '0 auto', padding: '80px 24px 60px', textAlign: 'center', position: 'relative' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 20, background: 'var(--accent-dim)', border: '1px solid var(--accent)', fontSize: 13, color: 'var(--accent-2)', marginBottom: 24, fontWeight: 500 }}>
-                        🇧🇩 বাংলাদেশের #১ AI বিজনেস চ্যাট সফটওয়্যার
+                        Bangladesh's number one AI-driven CRM.
                     </div>
 
                     <h1 style={{ fontFamily: 'Syne', fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.03em', marginBottom: 20 }}>
@@ -55,15 +56,15 @@ export default function Landing() {
                     </p>
 
                     <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 20 }}>
-                        <Link to="/register" className="btn btn-primary btn-lg">বিনামূল্যে শুরু করুন →</Link>
+                        <Link to="/register" className="btn btn-primary btn-lg">শুরু করুন →</Link>
                         <a href="#features" className="btn btn-outline btn-lg">ফিচার দেখুন</a>
                     </div>
 
-                    <div style={{ display: 'flex', gap: 20, justifyContent: 'center', flexWrap: 'wrap', fontSize: 13, color: 'var(--text-3)' }}>
+                    {/* <div style={{ display: 'flex', gap: 20, justifyContent: 'center', flexWrap: 'wrap', fontSize: 13, color: 'var(--text-3)' }}>
                         <span>✓ ক্রেডিট কার্ড লাগবে না</span>
                         <span>✓ Lifetime Free Plan</span>
                         <span>✓ বাংলা সাপোর্ট</span>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Stats bar */}
@@ -140,7 +141,7 @@ export default function Landing() {
                         <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 12 }}>
                             ৩ ধাপে শুরু করুন
                         </h2>
-                        <p style={{ fontSize: 16, color: 'var(--text-2)' }}>মিনিটেই সেটআপ, সাথে সাথে কাজ শুরু।</p>
+                        {/* <p style={{ fontSize: 16, color: 'var(--text-2)' }}>মিনিটেই সেটআপ, সাথে সাথে কাজ শুরু।</p> */}
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
@@ -169,21 +170,21 @@ export default function Landing() {
                     <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 12 }}>
                         সহজ ও স্বচ্ছ মূল্য
                     </h2>
-                    <p style={{ fontSize: 16, color: 'var(--text-2)' }}>বিনামূল্যে শুরু করুন, বড় হলে আপগ্রেড করুন।</p>
+                    <p style={{ fontSize: 16, color: 'var(--text-2)' }}>শুরু করুন, বড় হলে আপগ্রেড করুন।</p>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, maxWidth: 980, margin: '0 auto' }}>
                     {[
                         {
-                            name: 'Free', price: '৳০', tag: 'সারাজীবন বিনামূল্যে', highlight: false,
+                            name: 'Free', price: '$0', tag: 'সারাজীবন বিনামূল্যে', highlight: false,
                             features: ['১টি চ্যানেল', 'মাসে ১০০ মেসেজ', 'বেসিক AI রিপ্লাই', 'ইউনিফায়েড ইনবক্স', '১ জন ব্যবহারকারী']
                         },
                         {
-                            name: 'Pro', price: '৳১৫০০', period: '/মাস', tag: 'সবচেয়ে জনপ্রিয়', highlight: true,
+                            name: 'Pro', price: '$35', period: '/month', tag: 'সবচেয়ে জনপ্রিয়', highlight: true,
                             features: ['৩টি চ্যানেল', 'সীমাহীন মেসেজ', 'অ্যাডভান্সড AI + RAG', 'সম্পূর্ণ CRM', 'গ্রুপ ব্রডকাস্ট', 'লিড কোয়ালিফিকেশন', '৫ জন এজেন্ট']
                         },
                         {
-                            name: 'Pro Max', price: '৳৩৫০০', period: '/মাস', tag: 'বড় ব্যবসার জন্য', highlight: false,
+                            name: 'Pro Max', price: '$90', period: '/month', tag: 'বড় ব্যবসার জন্য', highlight: false,
                             features: ['সব Pro ফিচার +', 'সীমাহীন চ্যানেল', 'WhatsApp টেমপ্লেট', 'কাস্টম LLM', 'সীমাহীন এজেন্ট', 'অগ্রাধিকার সাপোর্ট']
                         },
                     ].map((p, i) => (
@@ -206,7 +207,7 @@ export default function Landing() {
                                 {p.period && <span style={{ fontSize: 14, color: 'var(--text-3)' }}>{p.period}</span>}
                             </div>
                             <Link to="/register" className={p.highlight ? 'btn btn-primary' : 'btn btn-outline'} style={{ width: '100%', marginBottom: 20 }}>
-                                {p.price === '৳০' ? 'বিনামূল্যে শুরু' : '১৪ দিন ট্রায়াল'}
+                                শুরু করুন
                             </Link>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                 {p.features.map((f, j) => (
@@ -219,7 +220,7 @@ export default function Landing() {
                     ))}
                 </div>
                 {/* <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-3)', marginTop: 24 }}>
-                    ১৪ দিনের ট্রায়াল। ক্রেডিট কার্ড লাগবে না। যেকোনো সময় বাতিল।
+                    ক্রেডিট কার্ড লাগবে না। যেকোনো সময় আপগ্রেড বা বাতিল করুন।
                 </p> */}
             </section>
 
@@ -266,7 +267,7 @@ export default function Landing() {
                         হাজার ব্যবসা ইতোমধ্যে AI দিয়ে কাস্টমার সামলাচ্ছে। আপনিও যোগ দিন।
                     </p>
                     <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-                        <Link to="/register" className="btn btn-primary btn-lg">বিনামূল্যে শুরু করুন →</Link>
+                        <Link to="/register" className="btn btn-primary btn-lg">শুরু করুন →</Link>
                         <a href="https://wa.me/8801848621196" className="btn btn-outline btn-lg" target="_blank" rel="noreferrer">💬 WhatsApp এ কথা বলুন</a>
                     </div>
                 </div>
@@ -305,7 +306,7 @@ export default function Landing() {
                         </div>
                     </div>
                     <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20, textAlign: 'center', fontSize: 12, color: 'var(--text-3)' }}>
-                        © 2026 SoftBrainChat · 🇧🇩 Made in Bangladesh
+                        © 2026 SoftBrainChat
                     </div>
                 </div>
             </footer>
