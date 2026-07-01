@@ -218,9 +218,9 @@ export default function Landing() {
                         </div>
                     ))}
                 </div>
-                <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-3)', marginTop: 24 }}>
+                {/* <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-3)', marginTop: 24 }}>
                     ১৪ দিনের ট্রায়াল। ক্রেডিট কার্ড লাগবে না। যেকোনো সময় বাতিল।
-                </p>
+                </p> */}
             </section>
 
             {/* ══════════ TESTIMONIALS ══════════ */}
