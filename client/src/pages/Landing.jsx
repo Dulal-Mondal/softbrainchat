@@ -25,8 +25,8 @@ export default function Landing() {
                             <Link to="/dashboard" className="btn btn-primary btn-sm">Dashboard →</Link>
                         ) : (
                             <>
-                                <Link to="/login" className="btn btn-ghost btn-sm">লগইন</Link>
-                                <Link to="/register" className="btn btn-primary btn-sm">Lets Create→</Link>
+                                <Link to="/login" className="btn btn-ghost btn-sm">Login</Link>
+                                <Link to="/register" className="btn btn-primary btn-sm">Let's Create→</Link>
                             </>
                         )}
                     </div>
@@ -40,7 +40,7 @@ export default function Landing() {
 
                 <div style={{ maxWidth: 900, margin: '0 auto', padding: '80px 24px 60px', textAlign: 'center', position: 'relative' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 20, background: 'var(--accent-dim)', border: '1px solid var(--accent)', fontSize: 13, color: 'var(--accent-2)', marginBottom: 24, fontWeight: 500 }}>
-                        Bangladesh's number one AI-driven CRM.
+                        Bangladesh's number #1 AI-driven CRM.
                     </div>
 
                     <h1 style={{ fontFamily: 'Syne', fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.03em', marginBottom: 20 }}>
