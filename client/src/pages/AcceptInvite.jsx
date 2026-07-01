@@ -37,10 +37,17 @@ export default function AcceptInvite() {
                 const cred = await createUserWithEmailAndPassword(auth, invite.email, password);
                 firebaseUid = cred.user.uid;
             } catch (fbErr) {
-                // email আগে থেকে থাকলে — login try করো
                 if (fbErr.code === 'auth/email-already-in-use') {
-                    const cred = await signInWithEmailAndPassword(auth, invite.email, password);
-                    firebaseUid = cred.user.uid;
+                    // email আগে থেকে Firebase এ আছে — এই password দিয়ে login try করো
+                    try {
+                        const cred = await signInWithEmailAndPassword(auth, invite.email, password);
+                        firebaseUid = cred.user.uid;
+                    } catch (loginErr) {
+                        // password মেলেনি — এই email আগে অন্য password এ তৈরি
+                        toast.error('এই email আগে থেকে ব্যবহৃত। আপনার আগের password দিন, অথবা login পেজে "Forgot Password" দিয়ে reset করুন।');
+                        setSubmitting(false);
+                        return;
+                    }
                 } else {
                     throw fbErr;
                 }
@@ -52,9 +59,10 @@ export default function AcceptInvite() {
             toast.success('✅ Account তৈরি হয়েছে! Dashboard এ নিয়ে যাচ্ছি...');
             setTimeout(() => navigate('/dashboard'), 1000);
         } catch (err) {
-            const msg = err.code === 'auth/weak-password' ? 'Password দুর্বল'
-                : err.code === 'auth/wrong-password' ? 'ভুল password'
-                    : err.response?.data?.message || err.message;
+            const msg = err.code === 'auth/weak-password' ? 'Password অন্তত ৬ অক্ষর হতে হবে'
+                : err.code === 'auth/invalid-email' ? 'Email সঠিক নয়'
+                    : err.code === 'auth/invalid-credential' ? 'এই email আগে ব্যবহৃত — Login পেজে Forgot Password দিয়ে reset করুন'
+                        : err.response?.data?.message || err.message;
             toast.error(msg);
         } finally { setSubmitting(false); }
     };

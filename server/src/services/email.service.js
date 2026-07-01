@@ -59,6 +59,15 @@ async function sendAgentInvite({ toEmail, agentName, ownerName, ownerEmail, invi
             from: { email: FROM, name: `${ownerName} · SoftBrainChat` },   // ভেতরে client এর নাম দেখায়
             subject: `${ownerName} আপনাকে SoftBrainChat team এ যোগ করেছেন`,
             html,
+            // ── spam কমানোর জন্য plain text version + settings ──
+            text: `হ্যালো ${agentName},\n\n${ownerName} আপনাকে SoftBrainChat team এ agent হিসেবে যোগ করেছেন।\n\nInvite accept করতে এই link এ যান:\n${inviteLink}\n\nএখানে আপনার password তৈরি করে login করুন।\n\n© 2026 SoftBrainChat`,
+            mailSettings: {
+                bypassListManagement: { enable: false },
+            },
+            trackingSettings: {
+                clickTracking: { enable: false, enableText: false },   // click tracking off → কম spam
+                openTracking: { enable: false },
+            },
         };
         // Reply-To = client এর email (agent reply করলে সরাসরি client পাবে)
         if (ownerEmail) {
