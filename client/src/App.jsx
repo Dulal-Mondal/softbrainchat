@@ -362,6 +362,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import AcceptInvite from './pages/AcceptInvite';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Chat = lazy(() => import('./pages/Chat'));
@@ -410,6 +411,7 @@ export default function App() {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/api-docs" element={<ApiDocs />} />
+                <Route path="/accept-invite" element={<AcceptInvite />} />
 
                 {/* Protected + Sidebar Layout */}
                 <Route element={<ProtectedRoute />}>
