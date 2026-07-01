@@ -26,7 +26,7 @@ export default function Landing() {
                         ) : (
                             <>
                                 <Link to="/login" className="btn btn-ghost btn-sm">Login</Link>
-                                <Link to="/register" className="btn btn-primary btn-sm">Let's Create→</Link>
+                                <Link to="/register" className="btn btn-primary btn-sm">Let's Create →</Link>
                             </>
                         )}
                     </div>
@@ -34,41 +34,94 @@ export default function Landing() {
             </nav>
 
             {/* ══════════ HERO ══════════ */}
-            <section style={{ position: 'relative', overflow: 'hidden' }}>
-                {/* Glow background */}
-                <div style={{ position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)', width: 800, height: 500, background: 'radial-gradient(ellipse, rgba(59,130,246,0.18), transparent 70%)', pointerEvents: 'none' }} />
+            <section style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%)' }}>
+                {/* Soft decorative blobs */}
+                <div style={{ position: 'absolute', top: -120, right: -80, width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.10), transparent 70%)', pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', bottom: -100, left: -60, width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle, rgba(167,139,250,0.08), transparent 70%)', pointerEvents: 'none' }} />
 
-                <div style={{ maxWidth: 900, margin: '0 auto', padding: '80px 24px 60px', textAlign: 'center', position: 'relative' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 20, background: 'var(--accent-dim)', border: '1px solid var(--accent)', fontSize: 13, color: 'var(--accent-2)', marginBottom: 24, fontWeight: 500 }}>
-                        Bangladesh's number #1 AI-driven CRM.
+                <div style={{ maxWidth: 1200, margin: '0 auto', padding: '60px 24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 40, alignItems: 'center', position: 'relative' }}>
+
+                    {/* ── Left: text ── */}
+                    <div>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 24, background: 'var(--bg-secondary)', border: '1px solid var(--border-2)', fontSize: 13, color: 'var(--text)', marginBottom: 24, fontWeight: 500, boxShadow: 'var(--shadow)' }}>
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)' }} />
+                            Bangladesh's #1 AI-driven CRM
+                        </div>
+
+                        <h1 style={{ fontFamily: 'Syne', fontSize: 'clamp(30px, 4.5vw, 52px)', fontWeight: 800, lineHeight: 1.12, letterSpacing: '-0.03em', marginBottom: 20 }}>
+                            আপনার ব্যবসার <span style={{ color: 'var(--accent-2)' }}>গ্রাহকসেবা</span> হবে সম্পূর্ণ অটোমেটিক
+                        </h1>
+
+                        <p style={{ fontSize: 'clamp(15px, 2vw, 18px)', color: 'var(--text-2)', lineHeight: 1.7, marginBottom: 30, maxWidth: 520 }}>
+                            SoftBrainChat একটি শক্তিশালী AI প্ল্যাটফর্ম — WhatsApp, Messenger, Instagram অটো-রিপ্লাই,
+                            CRM, লিড ম্যানেজমেন্ট ও ব্রডকাস্ট সব একসাথে।
+                        </p>
+
+                        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24 }}>
+                            <Link to="/register" className="btn btn-primary btn-lg">শুরু করুন →</Link>
+                            <a href="#features" className="btn btn-outline btn-lg">ফিচার দেখুন ▶</a>
+                        </div>
                     </div>
 
-                    <h1 style={{ fontFamily: 'Syne', fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.03em', marginBottom: 20 }}>
-                        আপনার ব্যবসার<br />
-                        <span style={{ background: 'linear-gradient(135deg, #60a5fa, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                            AI বিক্রয় প্রতিনিধি
-                        </span>
-                    </h1>
+                    {/* ── Right: mockup + floating stats ── */}
+                    <div style={{ position: 'relative', minHeight: 360 }}>
+                        {/* Dashboard mockup card */}
+                        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 16, boxShadow: 'var(--shadow-lg)', overflow: 'hidden' }}>
+                            {/* Fake browser bar */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 14px', borderBottom: '1px solid var(--border)', background: 'var(--bg-tertiary)' }}>
+                                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f56' }} />
+                                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ffbd2e' }} />
+                                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#27c93f' }} />
+                                <span style={{ marginLeft: 10, fontSize: 11, color: 'var(--text-3)' }}>softbrainchat.app/inbox</span>
+                            </div>
+                            {/* Mock chat/dashboard content */}
+                            <div style={{ padding: 18 }}>
+                                {/* KPI row */}
+                                <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+                                    {[{ v: '১,২৪৭', l: 'মেসেজ', c: 'var(--accent-2)' }, { v: '৮৯%', l: 'AI হ্যান্ডেল', c: 'var(--green)' }, { v: '৩২', l: 'লিড', c: 'var(--purple)' }].map((k, i) => (
+                                        <div key={i} style={{ flex: 1, background: 'var(--bg-tertiary)', borderRadius: 10, padding: '12px 10px', textAlign: 'center' }}>
+                                            <div style={{ fontFamily: 'Syne', fontSize: 18, fontWeight: 700, color: k.c }}>{k.v}</div>
+                                            <div style={{ fontSize: 10, color: 'var(--text-3)' }}>{k.l}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                                {/* Chat bubbles */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    <div style={{ alignSelf: 'flex-start', maxWidth: '75%', background: 'var(--bg-tertiary)', padding: '8px 12px', borderRadius: 12, fontSize: 12, color: 'var(--text)' }}>
+                                        দাম কত এই শাড়িটার? 🥻
+                                    </div>
+                                    <div style={{ alignSelf: 'flex-end', maxWidth: '80%', background: 'var(--accent)', color: '#fff', padding: '8px 12px', borderRadius: 12, fontSize: 12 }}>
+                                        এই কাতান শাড়িটি ৳২,৫০০। এখন ১০% ছাড়ে ৳২,২৫০! অর্ডার করতে চান? 😊
+                                        <div style={{ fontSize: 9, opacity: 0.8, marginTop: 3 }}>🤖 AI · তাৎক্ষণিক</div>
+                                    </div>
+                                    <div style={{ alignSelf: 'flex-start', maxWidth: '60%', background: 'var(--bg-tertiary)', padding: '8px 12px', borderRadius: 12, fontSize: 12, color: 'var(--text)' }}>
+                                        হ্যাঁ, অর্ডার করব ✅
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                    <p style={{ fontSize: 'clamp(15px, 2vw, 18px)', color: 'var(--text-2)', lineHeight: 1.7, maxWidth: 640, margin: '0 auto 32px' }}>
-                        WhatsApp, Messenger ও Instagram-এ ২৪/৭ AI অটো-রিপ্লাই। কাস্টমার CRM, লিড ম্যানেজমেন্ট,
-                        গ্রুপ ব্রডকাস্ট — সব একসাথে। আপনার ব্যবসা নিজে নিজেই কথা বলবে।
-                    </p>
+                        {/* Floating stat badges */}
+                        <div style={{ position: 'absolute', top: 20, right: -8, background: 'var(--bg-secondary)', border: '1px solid var(--border-2)', borderRadius: 12, padding: '10px 14px', boxShadow: 'var(--shadow-lg)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 18 }}>⚡</span>
+                            <div>
+                                <div style={{ fontFamily: 'Syne', fontSize: 15, fontWeight: 700 }}>২৪/৭</div>
+                                <div style={{ fontSize: 10, color: 'var(--text-3)' }}>অটো-রিপ্লাই</div>
+                            </div>
+                        </div>
 
-                    <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 20 }}>
-                        <Link to="/register" className="btn btn-primary btn-lg">শুরু করুন →</Link>
-                        <a href="#features" className="btn btn-outline btn-lg">ফিচার দেখুন</a>
+                        <div style={{ position: 'absolute', bottom: 10, left: -8, background: 'var(--bg-secondary)', border: '1px solid var(--border-2)', borderRadius: 12, padding: '10px 14px', boxShadow: 'var(--shadow-lg)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 18 }}>📈</span>
+                            <div>
+                                <div style={{ fontFamily: 'Syne', fontSize: 15, fontWeight: 700, color: 'var(--green)' }}>৩x বিক্রি</div>
+                                <div style={{ fontSize: 10, color: 'var(--text-3)' }}>গড় বৃদ্ধি</div>
+                            </div>
+                        </div>
                     </div>
-
-                    {/* <div style={{ display: 'flex', gap: 20, justifyContent: 'center', flexWrap: 'wrap', fontSize: 13, color: 'var(--text-3)' }}>
-                        <span>✓ ক্রেডিট কার্ড লাগবে না</span>
-                        <span>✓ Lifetime Free Plan</span>
-                        <span>✓ বাংলা সাপোর্ট</span>
-                    </div> */}
                 </div>
 
                 {/* Stats bar */}
-                <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 24px 60px' }}>
+                <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 24px 56px', position: 'relative' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16 }}>
                         {[
                             { num: '৩x', label: 'দ্রুত রেসপন্স' },
@@ -141,7 +194,6 @@ export default function Landing() {
                         <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 12 }}>
                             ৩ ধাপে শুরু করুন
                         </h2>
-                        {/* <p style={{ fontSize: 16, color: 'var(--text-2)' }}>মিনিটেই সেটআপ, সাথে সাথে কাজ শুরু।</p> */}
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
@@ -219,9 +271,6 @@ export default function Landing() {
                         </div>
                     ))}
                 </div>
-                {/* <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-3)', marginTop: 24 }}>
-                    ক্রেডিট কার্ড লাগবে না। যেকোনো সময় আপগ্রেড বা বাতিল করুন।
-                </p> */}
             </section>
 
             {/* ══════════ TESTIMONIALS ══════════ */}
@@ -283,30 +332,31 @@ export default function Landing() {
                                 <span style={{ fontFamily: 'Syne', fontSize: 18, fontWeight: 800 }}>SoftBrainChat</span>
                             </div>
                             <p style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.6 }}>
-                                বাংলাদেশের ব্যবসার জন্য AI চ্যাট, অটো-রিপ্লাই ও CRM সমাধান।
+                                AI-powered chat, auto-reply, and CRM solution for businesses in Bangladesh.
                             </p>
                         </div>
                         <div>
-                            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>প্রোডাক্ট</div>
-                            {['AI চ্যাট', 'অটো-রিপ্লাই', 'CRM', 'ব্রডকাস্ট'].map(x => (
+                            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Product</div>
+                            {['AI Chat', 'Auto-Reply', 'CRM', 'Broadcast', 'Analytics'].map(x => (
                                 <div key={x} style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 8 }}>{x}</div>
                             ))}
                         </div>
                         <div>
-                            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>কোম্পানি</div>
-                            {['আমাদের সম্পর্কে', 'যোগাযোগ', 'শর্তাবলী', 'গোপনীয়তা'].map(x => (
-                                <div key={x} style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 8 }}>{x}</div>
-                            ))}
+                            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Company</div>
+                            <div style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 8 }}>About Us</div>
+                            <div style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 8 }}>Contact</div>
+                            <div style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 8 }}>Terms of Service</div>
+                            <Link to="/privacy-policy" style={{ fontSize: 13, color: 'var(--text-3)', display: 'block' }}>Privacy Policy</Link>
                         </div>
                         <div>
-                            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>যোগাযোগ</div>
-                            <div style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 8 }}>📍 ঢাকা, বাংলাদেশ</div>
-                            <div style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 8 }}>💬 WhatsApp সাপোর্ট</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Contact</div>
+                            <div style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 8 }}>📍 Dhaka, Bangladesh</div>
+                            <a href="https://wa.me/8801848621196" target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--text-3)', display: 'block', marginBottom: 8 }}>💬 WhatsApp Support</a>
                             <div style={{ fontSize: 13, color: 'var(--text-3)' }}>✉️ support@softbrainchat.com</div>
                         </div>
                     </div>
                     <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20, textAlign: 'center', fontSize: 12, color: 'var(--text-3)' }}>
-                        © 2026 SoftBrainChat
+                        © 2026 SoftBrainChat · 🔒 SSL Secured · 🇧🇩 Made in Bangladesh
                     </div>
                 </div>
             </footer>
