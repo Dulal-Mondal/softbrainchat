@@ -1,3 +1,7 @@
+/* Fonts: Inter (UI), Syne (headings/display), DM Mono (code/IDs) */
+/* ⚠️ @import অবশ্যই সবার উপরে — @tailwind এর আগে (নাহলে Vite build fail করে) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=Syne:wght@600;700;800&family=DM+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,9 +9,6 @@
 /* ============================================================
    SoftBrainChat — Global Design System
    ============================================================ */
-
-/* Fonts: Inter (UI), Syne (headings/display), DM Mono (code/IDs) */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=Syne:wght@600;700;800&family=DM+Mono:wght@400;500&display=swap');
 
 /* ---------- Theme Tokens (DARK — default) ---------- */
 :root {
