@@ -1,35 +1,32 @@
 const Contact = require('../models/Contact.model');
 const MetaChannel = require('../models/MetaChannel.model');
 
+// agent context — না থাকলেও crash করবে না
+let resolveContext = async (user) => ({ isAgent: false, ownerId: user._id, agentUserId: null });
+try { ({ resolveContext } = require('../utils/agentContext')); } catch (e) { /* helper not installed */ }
+
 // ── Phone number normalize করো (WhatsApp format) ─────────────
-// বাংলাদেশ: 01XXXXXXXXX → 8801XXXXXXXXX
 function normalizePhone(raw) {
     if (!raw) return null;
-    let p = String(raw).replace(/\D/g, '');   // শুধু digit
+    let p = String(raw).replace(/\D/g, '');
 
     if (!p) return null;
 
-    // 01XXXXXXXXX (11 digit BD) → 880 যোগ করো
     if (p.length === 11 && p.startsWith('01')) {
         p = '88' + p;
     }
-    // 1XXXXXXXXX (10 digit, 0 ছাড়া) → 880 যোগ করো
     else if (p.length === 10 && p.startsWith('1')) {
         p = '880' + p;
     }
-    // already 8801XXXXXXXXX (13 digit) → ঠিক আছে
-    // অন্য দেশের number হলে যেমন আছে রাখো
 
-    // valid length check (8-15 digit international)
     if (p.length < 8 || p.length > 15) return null;
     return p;
 }
 
 // ── POST /api/contacts/import ────────────────────────────────
-// body: { channelId, contacts: [{ name, phone, tags }] }
-// (frontend CSV/Excel parse করে এই array পাঠাবে)
 exports.importContacts = async (req, res) => {
     try {
+        const ctx = await resolveContext(req.user);
         const { channelId, contacts } = req.body;
 
         if (!channelId) return res.status(400).json({ message: 'Channel select করুন' });
@@ -37,7 +34,16 @@ exports.importContacts = async (req, res) => {
             return res.status(400).json({ message: 'কোনো contact পাওয়া যায়নি' });
         }
 
-        const channel = await MetaChannel.findOne({ _id: channelId, userId: req.user._id });
+        // agent হলে — এই channel এ access আছে কিনা
+        if (ctx.isAgent && ctx.agentDoc?.allowedChannels?.length) {
+            const allowed = ctx.agentDoc.allowedChannels.map(String);
+            if (!allowed.includes(String(channelId))) {
+                return res.status(403).json({ message: 'এই channel এ আপনার access নেই' });
+            }
+        }
+
+        // channel টা owner এর (agent owner এর channel এ import করবে)
+        const channel = await MetaChannel.findOne({ _id: channelId, userId: ctx.ownerId });
         if (!channel) return res.status(404).json({ message: 'Channel not found' });
 
         let imported = 0, skipped = 0, updated = 0;
@@ -57,11 +63,10 @@ exports.importContacts = async (req, res) => {
                 : (row.tags ? String(row.tags).split(',').map(t => t.trim()).filter(Boolean) : []);
 
             try {
-                // senderId = phone (WhatsApp এ waId হিসেবে কাজ করবে)
-                const existing = await Contact.findOne({ userId: req.user._id, senderId: phone, channelId });
+                // contact owner এর অধীনে save হবে (agent import করলেও)
+                const existing = await Contact.findOne({ userId: ctx.ownerId, senderId: phone, channelId });
 
                 if (existing) {
-                    // আগে থেকে আছে — নাম/tag update করো
                     let changed = false;
                     if (name && name !== 'Customer' && existing.name !== name) { existing.name = name; changed = true; }
                     if (tags.length) {
@@ -71,9 +76,8 @@ exports.importContacts = async (req, res) => {
                     if (changed) await existing.save();
                     updated += 1;
                 } else {
-                    // নতুন contact তৈরি করো
                     await Contact.create({
-                        userId: req.user._id,
+                        userId: ctx.ownerId,   // owner এর অধীনে
                         senderId: phone,
                         channelId,
                         platform: channel.platform,
@@ -95,7 +99,7 @@ exports.importContacts = async (req, res) => {
             success: true,
             imported, updated, skipped,
             total: contacts.length,
-            errors: errors.slice(0, 20),   // প্রথম ২০টা error
+            errors: errors.slice(0, 20),
         });
     } catch (err) {
         res.status(500).json({ message: err.message });
