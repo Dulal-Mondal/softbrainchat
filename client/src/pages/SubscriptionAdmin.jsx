@@ -48,7 +48,7 @@ export default function SubscriptionAdmin() {
                     <h1 style={{ fontFamily: 'Syne', fontSize: 24, fontWeight: 700 }}>💳 Subscription Approvals</h1>
                     <p style={{ color: 'var(--text-2)', fontSize: 13, marginTop: 4 }}>Client দের plan request approve/reject করুন</p>
                 </div>
-                <Link to="/dashboard" className="btn btn-outline btn-sm">← Dashboard</Link>
+                <Link to="/admin" className="btn btn-outline btn-sm">← Admin Panel</Link>
             </div>
 
             {/* Filter tabs */}

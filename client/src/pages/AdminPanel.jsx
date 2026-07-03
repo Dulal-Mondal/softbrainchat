@@ -21,6 +21,7 @@ export default function AdminPanel() {
     const [search, setSearch] = useState('');
     const [planFilter, setPlanFilter] = useState('');
     const [overriding, setOverriding] = useState(null);
+    const [pendingCount, setPendingCount] = useState(0);   // pending subscription request সংখ্যা
 
     useEffect(() => { if (!isAdmin) navigate('/dashboard'); }, [isAdmin, navigate]);
 
@@ -45,6 +46,18 @@ export default function AdminPanel() {
         const t = setTimeout(loadData, 300);
         return () => clearTimeout(t);
     }, [loadData]);
+
+    // pending subscription request সংখ্যা আনো (badge দেখাতে)
+    useEffect(() => {
+        import('../services/api').then(({ default: api }) => {
+            api.get('/subscriptions/all', { params: { status: 'pending' } })
+                .then(res => {
+                    const subs = res.subscriptions || res.data?.subscriptions || [];
+                    setPendingCount(subs.length);
+                })
+                .catch(() => { });
+        });
+    }, []);
 
     const handleDelete = async (u) => {
         if (!confirm(`"${u.email}" delete করবেন?`)) return;
@@ -81,7 +94,24 @@ export default function AdminPanel() {
                         Logged in as <strong>{user?.email}</strong>
                     </p>
                 </div>
-                <Link to="/dashboard" className="btn btn-outline btn-sm">← Dashboard</Link>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    {/* ── নতুন: Subscription Requests button (badge সহ) ── */}
+                    <Link to="/subscription-admin" className="btn btn-primary btn-sm" style={{ position: 'relative' }}>
+                        📋 Subscription Requests
+                        {pendingCount > 0 && (
+                            <span style={{
+                                position: 'absolute', top: -8, right: -8,
+                                background: 'var(--red, #ef4444)', color: '#fff',
+                                fontSize: 10, fontWeight: 700, minWidth: 18, height: 18,
+                                borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                padding: '0 5px',
+                            }}>
+                                {pendingCount}
+                            </span>
+                        )}
+                    </Link>
+                    <Link to="/dashboard" className="btn btn-outline btn-sm">← Dashboard</Link>
+                </div>
             </div>
 
             {/* Stats */}
