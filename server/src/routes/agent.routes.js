@@ -9,6 +9,7 @@ router.post('/invite/:token/accept', ctrl.acceptInvite);
 // ── Protected routes (admin) ──
 router.use(authMW);
 router.get('/my-access', ctrl.getMyAccess);
+router.get('/all-emails', ctrl.getAllAgentEmails);   // super admin — agent badge
 router.get('/', ctrl.getAgents);
 router.post('/', ctrl.addAgent);
 router.patch('/:agentId', ctrl.updateAgent);

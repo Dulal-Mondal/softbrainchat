@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { adminService } from '../services/adminService';
 import PlanOverrideModal from '../components/admin/PlanOverrideModal';
 import { Link, useNavigate } from 'react-router-dom';
+import api from '../services/api';
 import toast from 'react-hot-toast';
 
 const PLAN_STYLE = {
@@ -21,7 +22,8 @@ export default function AdminPanel() {
     const [search, setSearch] = useState('');
     const [planFilter, setPlanFilter] = useState('');
     const [overriding, setOverriding] = useState(null);
-    const [pendingCount, setPendingCount] = useState(0);   // pending subscription request সংখ্যা
+    const [pendingCount, setPendingCount] = useState(0);
+    const [agentMap, setAgentMap] = useState({});   // email → owner নাম (agent চিনতে)
 
     useEffect(() => { if (!isAdmin) navigate('/dashboard'); }, [isAdmin, navigate]);
 
@@ -47,16 +49,24 @@ export default function AdminPanel() {
         return () => clearTimeout(t);
     }, [loadData]);
 
-    // pending subscription request সংখ্যা আনো (badge দেখাতে)
+    // pending subscription + সব agent এর email আনো
     useEffect(() => {
-        import('../services/api').then(({ default: api }) => {
-            api.get('/subscriptions/all', { params: { status: 'pending' } })
-                .then(res => {
-                    const subs = res.subscriptions || res.data?.subscriptions || [];
-                    setPendingCount(subs.length);
-                })
-                .catch(() => { });
-        });
+        api.get('/subscriptions/all', { params: { status: 'pending' } })
+            .then(res => {
+                const subs = res.subscriptions || res.data?.subscriptions || [];
+                setPendingCount(subs.length);
+            })
+            .catch(() => { });
+
+        // সব agent এর email → owner map বানাও (badge দেখাতে)
+        api.get('/agents/all-emails')
+            .then(res => {
+                const map = res.agentMap || res.data?.agentMap || {};
+                setAgentMap(map);
+            })
+            .catch(() => {
+                // fallback: endpoint না থাকলে চুপচাপ skip
+            });
     }, []);
 
     const handleDelete = async (u) => {
@@ -95,7 +105,6 @@ export default function AdminPanel() {
                     </p>
                 </div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                    {/* ── নতুন: Subscription Requests button (badge সহ) ── */}
                     <Link to="/subscription-admin" className="btn btn-primary btn-sm" style={{ position: 'relative' }}>
                         📋 Subscription Requests
                         {pendingCount > 0 && (
@@ -177,6 +186,10 @@ export default function AdminPanel() {
                             const used = u.usage?.messagesThisMonth || 0;
                             const pct = limit === Infinity ? 0 : Math.min(100, Math.round((used / (limit || 100)) * 100));
 
+                            // এই user কি agent? (email দিয়ে চেক)
+                            const agentOwner = agentMap[u.email?.toLowerCase()];
+                            const isAgentUser = !!agentOwner;
+
                             return (
                                 <tr key={u._id}
                                     onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-tertiary)'}
@@ -189,8 +202,22 @@ export default function AdminPanel() {
                                                 {(u.name?.[0] || u.email?.[0] || '?').toUpperCase()}
                                             </div>
                                             <div>
-                                                <div style={{ fontWeight: 500 }}>{u.name || '—'}</div>
+                                                <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                    {u.name || '—'}
+                                                    {/* Agent badge */}
+                                                    {isAgentUser && (
+                                                        <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 8, background: 'var(--purple-dim, #2a1f3d)', color: 'var(--purple, #a78bfa)' }}>
+                                                            👤 Agent
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{u.email}</div>
+                                                {/* agent হলে owner এর নাম */}
+                                                {isAgentUser && (
+                                                    <div style={{ fontSize: 10, color: 'var(--purple, #a78bfa)', marginTop: 2 }}>
+                                                        ↳ {agentOwner} এর team এ
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </td>
@@ -204,10 +231,19 @@ export default function AdminPanel() {
 
                                     {/* Effective */}
                                     <td style={td}>
-                                        <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 10, background: eps.bg, color: eps.color, border: hasOverride ? `1px dashed ${eps.color}` : 'none' }}>
-                                            {eps.label}
-                                        </span>
-                                        {hasOverride && <div style={{ fontSize: 10, color: 'var(--orange)', marginTop: 3 }}>⚡ Override active</div>}
+                                        {isAgentUser ? (
+                                            // agent হলে — owner এর plan এ কাজ করছে বোঝাও
+                                            <span style={{ fontSize: 10, color: 'var(--purple, #a78bfa)' }}>
+                                                admin এর plan এ
+                                            </span>
+                                        ) : (
+                                            <>
+                                                <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 10, background: eps.bg, color: eps.color, border: hasOverride ? `1px dashed ${eps.color}` : 'none' }}>
+                                                    {eps.label}
+                                                </span>
+                                                {hasOverride && <div style={{ fontSize: 10, color: 'var(--orange)', marginTop: 3 }}>⚡ Override active</div>}
+                                            </>
+                                        )}
                                     </td>
 
                                     {/* Usage */}
@@ -230,7 +266,7 @@ export default function AdminPanel() {
                                                 background: u.role === 'admin' ? 'var(--orange-dim)' : 'var(--bg-tertiary)', color: u.role === 'admin' ? 'var(--orange)' : 'var(--text-2)',
                                                 opacity: u._id === user?._id ? 0.4 : 1
                                             }}>
-                                            {u.role === 'admin' ? '🛡️ Admin' : '👤 User'}
+                                            {u.role === 'admin' ? '🛡️ Admin' : isAgentUser ? '👤 Agent' : '👤 User'}
                                         </button>
                                     </td>
 

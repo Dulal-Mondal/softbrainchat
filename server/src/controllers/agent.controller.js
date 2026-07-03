@@ -226,4 +226,27 @@ exports.getMyAccess = async (req, res) => {
     }
 };
 
+// ── GET /api/agents/all-emails ───────────────────────────────
+// super admin panel এর জন্য — সব agent এর email → owner নাম
+// (কোন user agent সেটা badge দেখাতে)
+exports.getAllAgentEmails = async (req, res) => {
+    try {
+        // শুধু super admin
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'super admin only' });
+        }
+
+        const agents = await Agent.find({ active: true }).populate('ownerId', 'name');
+        const agentMap = {};
+        for (const a of agents) {
+            if (a.email) {
+                agentMap[a.email.toLowerCase()] = a.ownerId?.name || 'Team';
+            }
+        }
+        res.json({ success: true, agentMap });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 module.exports = exports;
