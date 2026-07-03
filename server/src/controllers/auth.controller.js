@@ -4,6 +4,24 @@ const User = require('../models/User.model');
 exports.getMe = async (req, res) => {
     try {
         const user = req.user; // authMiddleware থেকে আসে
+
+        // ── Agent হলে owner এর plan info নাও ──
+        // auth.middleware আগেই req.isAgent / req.ownerId সেট করেছে
+        let effectivePlan = user.effectivePlan;
+        let planLimits = user.planLimits;
+        let planForClient = user.plan;
+        let isAgent = false;
+
+        if (req.isAgent && req.ownerId) {
+            const owner = await User.findById(req.ownerId);   // full doc (virtual এর জন্য)
+            if (owner) {
+                effectivePlan = owner.effectivePlan;               // owner এর plan
+                planForClient = owner.effectivePlan;
+                planLimits = { ...owner.planLimits, metaChannels: 0 };  // channel create ছাড়া
+                isAgent = true;
+            }
+        }
+
         res.json({
             success: true,
             user: {
@@ -13,10 +31,11 @@ exports.getMe = async (req, res) => {
                 name: user.name,
                 photo: user.photo,
                 role: user.role,
-                plan: user.plan,
-                effectivePlan: user.effectivePlan,
+                plan: planForClient,           // agent হলে owner এর plan
+                effectivePlan: effectivePlan,  // agent হলে owner এর effectivePlan
                 planOverride: user.planOverride,
-                planLimits: user.planLimits,
+                planLimits: planLimits,        // agent হলে owner এর limit (channel=0)
+                isAgent: isAgent,              // frontend জানবে এটা agent
                 preferences: user.preferences,
                 llmProviders: user.llmProviders.map(p => ({
                     id: p._id,

@@ -13,7 +13,8 @@ const PLAN_FEATURES = {
 export function PlanProvider({ children }) {
     const { user } = useAuth();
 
-    const plan = user?.effectivePlan || 'free';
+    // agent হলে backend getMe থেকে owner এর effectivePlan আসে
+    const plan = user?.effectivePlan || user?.plan || 'free';
     const features = PLAN_FEATURES[plan] || PLAN_FEATURES['free'];
     const limits = user?.planLimits || {};
     const usage = user?.usage || { messagesThisMonth: 0 };
@@ -27,7 +28,7 @@ export function PlanProvider({ children }) {
     };
 
     return (
-        <PlanContext.Provider value={{ plan, features, limits, usage, canAccess, usagePercent }}>
+        <PlanContext.Provider value={{ plan, features, limits, usage, canAccess, usagePercent, isAgent: !!user?.isAgent }}>
             {children}
         </PlanContext.Provider>
     );
