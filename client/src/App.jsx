@@ -363,6 +363,8 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import AcceptInvite from './pages/AcceptInvite';
+import Subscribe from './pages/Subscribe';
+import SubscriptionAdmin from './pages/SubscriptionAdmin';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Chat = lazy(() => import('./pages/Chat'));
@@ -430,6 +432,8 @@ export default function App() {
                     <Route path="/settings" element={<Settings />} />
                     <Route path="/billing" element={<Billing />} />
                     <Route path="/admin" element={<AdminPanel />} />
+                    <Route path="/subscribe" element={<Subscribe />} />
+                    <Route path="/subscription-admin" element={<SubscriptionAdmin />} />
                   </Route>
                 </Route>
 

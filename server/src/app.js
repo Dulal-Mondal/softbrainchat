@@ -338,6 +338,7 @@ app.use('/api/broadcasts', require('./routes/broadcast.routes'));
 app.use('/api/templates', require('./routes/template.routes'));
 app.use('/api/crm-config', require('./routes/crmConfig.routes'));
 app.use('/api/analytics', require('./routes/analytics.routes'));
+app.use('/api/subscriptions', require('./routes/subscription.routes'));
 
 // ── Public OMS API ────────────────────────────────────────────
 // External OMS software এই endpoint call করবে
