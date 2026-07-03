@@ -1,34 +1,3 @@
-// const mongoose = require('mongoose');
-
-// // Business owner এর team এর agent/staff
-// const AgentSchema = new mongoose.Schema({
-//     // কোন business owner এর agent
-//     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-
-//     name: { type: String, required: true },
-//     email: { type: String, required: true },
-
-//     // Agent এর নিজের Firebase login থাকলে (পরে invite system)
-//     agentUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-
-//     role: { type: String, enum: ['agent', 'manager'], default: 'agent' },
-
-//     active: { type: Boolean, default: true },
-
-//     // Stats
-//     assignedCount: { type: Number, default: 0 },
-//     resolvedCount: { type: Number, default: 0 },
-
-//     createdAt: { type: Date, default: Date.now },
-// });
-
-// AgentSchema.index({ ownerId: 1, email: 1 }, { unique: true });
-
-// module.exports = mongoose.model('Agent', AgentSchema);
-
-
-
-
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 
@@ -49,8 +18,15 @@ const AgentSchema = new mongoose.Schema({
     // ── Feature permissions — admin যেগুলো দেবে ──
     permissions: {
         type: [String],
-        default: ['inbox'],   // ডিফল্ট শুধু inbox
-        // সম্ভাব্য: inbox, crm, broadcast, import, orders, agents, analytics, business, meta
+        default: ['inbox'],
+    },
+
+    // ── Channel access — admin যে channel গুলো দেবে ──
+    // খালি হলে admin এর সব channel access পাবে
+    allowedChannels: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: 'MetaChannel',
+        default: [],
     },
 
     // ── Invite system ──

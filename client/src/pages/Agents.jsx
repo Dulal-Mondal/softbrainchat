@@ -17,20 +17,33 @@ const FEATURES = [
 
 export default function Agents() {
     const [agents, setAgents] = useState([]);
+    const [channels, setChannels] = useState([]);   // owner এর channel গুলো
     const [loading, setLoading] = useState(true);
     const [showAdd, setShowAdd] = useState(false);
     const [form, setForm] = useState({ name: '', email: '', role: 'agent', permissions: ['inbox'] });
     const [saving, setSaving] = useState(false);
-    const [inviteLink, setInviteLink] = useState(null);   // email fail হলে দেখাবে
+    const [inviteLink, setInviteLink] = useState(null);
 
     useEffect(() => { load(); }, []);
 
     const load = async () => {
         try {
-            const res = await api.get('/agents');
-            setAgents(res.agents || res.data?.agents || []);
+            const [ag, ch] = await Promise.all([
+                api.get('/agents'),
+                api.get('/meta/channels').catch(() => ({ channels: [] })),
+            ]);
+            setAgents(ag.agents || ag.data?.agents || []);
+            setChannels(ch.channels || ch.data?.channels || []);
         } catch (err) { toast.error(err.message); }
         finally { setLoading(false); }
+    };
+
+    const updateChannels = async (agent, newChannels) => {
+        try {
+            await api.patch(`/agents/${agent._id}`, { allowedChannels: newChannels });
+            setAgents(agents.map(a => a._id === agent._id ? { ...a, allowedChannels: newChannels } : a));
+            toast.success('Channel access updated');
+        } catch (err) { toast.error(err.message); }
     };
 
     const togglePerm = (key) => {
@@ -242,6 +255,34 @@ export default function Agents() {
                                     })}
                                 </div>
                             </div>
+
+                            {/* Channel distribution — admin agent কে channel দেয় */}
+                            {channels.length > 0 && (
+                                <div style={{ marginBottom: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+                                    <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 8 }}>
+                                        📲 Channel Access (কোন channel এ কাজ করবে — খালি হলে সব):
+                                    </div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                        {channels.map(ch => {
+                                            const has = (agent.allowedChannels || []).map(String).includes(String(ch._id));
+                                            return (
+                                                <button key={ch._id}
+                                                    onClick={() => updateChannels(agent, has
+                                                        ? agent.allowedChannels.filter(c => String(c) !== String(ch._id))
+                                                        : [...(agent.allowedChannels || []), ch._id])}
+                                                    style={{
+                                                        padding: '4px 10px', borderRadius: 8, fontSize: 11, cursor: 'pointer',
+                                                        border: `1px solid ${has ? 'var(--green)' : 'var(--border)'}`,
+                                                        background: has ? 'var(--green-dim)' : 'transparent',
+                                                        color: has ? 'var(--green)' : 'var(--text-3)',
+                                                    }}>
+                                                    {has ? '✓' : '+'} {ch.name} ({ch.platform})
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
 
                             <div style={{ display: 'flex', gap: 8 }}>
                                 {agent.inviteStatus !== 'accepted' && (
