@@ -29,6 +29,15 @@ const AgentSchema = new mongoose.Schema({
         default: [],
     },
 
+    // ── Message access mode ──
+    // 'assigned' = শুধু admin এর assign করা conversation দেখবে (ডিফল্ট)
+    // 'channel'  = assigned channel এর সব message দেখবে (automatic)
+    accessMode: {
+        type: String,
+        enum: ['assigned', 'channel'],
+        default: 'assigned',
+    },
+
     // ── Invite system ──
     inviteToken: { type: String, default: null },   // unique token
     inviteStatus: { type: String, enum: ['pending', 'accepted'], default: 'pending' },

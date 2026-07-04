@@ -84,13 +84,14 @@ exports.addAgent = async (req, res) => {
 // permission, role, active, allowedChannels update
 exports.updateAgent = async (req, res) => {
     try {
-        const { name, role, active, permissions, allowedChannels } = req.body;
+        const { name, role, active, permissions, allowedChannels, accessMode } = req.body;
         const updates = {};
         if (name !== undefined) updates.name = name;
         if (role !== undefined) updates.role = role;
         if (active !== undefined) updates.active = active;
         if (Array.isArray(permissions)) updates.permissions = permissions;
         if (Array.isArray(allowedChannels)) updates.allowedChannels = allowedChannels;
+        if (accessMode && ['assigned', 'channel'].includes(accessMode)) updates.accessMode = accessMode;
 
         const agent = await Agent.findOneAndUpdate(
             { _id: req.params.agentId, ownerId: req.user._id },

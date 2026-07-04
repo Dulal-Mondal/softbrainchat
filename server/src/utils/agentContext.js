@@ -1,6 +1,6 @@
 const Agent = require('../models/Agent.model');
 
-// ── এই user কি কারো agent? permission সহ ──
+// ── এই user কি কারো agent? permission + channel access সহ ──
 async function resolveContext(user) {
     let agentDoc = await Agent.findOne({ agentUserId: user._id, active: true });
 
@@ -19,6 +19,8 @@ async function resolveContext(user) {
             agentUserId: user._id,
             agentDoc,
             permissions: agentDoc.permissions || ['inbox'],
+            allowedChannels: agentDoc.allowedChannels || [],   // admin এর দেওয়া channel
+            accessMode: agentDoc.accessMode || 'assigned',     // 'assigned' বা 'channel'
         };
     }
 
@@ -27,7 +29,9 @@ async function resolveContext(user) {
         ownerId: user._id,
         agentUserId: null,
         agentDoc: null,
-        permissions: null,   // owner — সব access
+        permissions: null,
+        allowedChannels: [],
+        accessMode: 'all',   // owner সব দেখে
     };
 }
 

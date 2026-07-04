@@ -246,6 +246,26 @@ exports.webhookReceive = async (req, res) => {
 
         emitToUser(channel.userId._id, 'meta:new_message', { message: metaMsg });
 
+        // ── Channel-mode agent দের real-time notify ──
+        // এই channel এ যেসব agent এর accessMode='channel', তাদের নতুন message পাঠাও
+        try {
+            const Agent = require('../models/Agent.model');
+            const channelAgents = await Agent.find({
+                ownerId: channel.userId._id,
+                active: true,
+                accessMode: 'channel',
+                $or: [
+                    { allowedChannels: channel._id },
+                    { allowedChannels: { $size: 0 } },   // খালি = সব channel
+                ],
+            }).select('agentUserId');
+            for (const ag of channelAgents) {
+                if (ag.agentUserId) {
+                    emitToUser(ag.agentUserId, 'meta:new_message', { message: metaMsg });
+                }
+            }
+        } catch (e) { /* agent notify skip */ }
+
         if (!channel.autoReplyEnabled) {
             metaMsg.status = 'review_needed';
             await metaMsg.save();

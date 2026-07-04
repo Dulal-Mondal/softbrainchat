@@ -46,6 +46,14 @@ export default function Agents() {
         } catch (err) { toast.error(err.message); }
     };
 
+    const updateAccessMode = async (agent, mode) => {
+        try {
+            await api.patch(`/agents/${agent._id}`, { accessMode: mode });
+            setAgents(agents.map(a => a._id === agent._id ? { ...a, accessMode: mode } : a));
+            toast.success(mode === 'channel' ? 'পুরো channel access দেওয়া হলো' : 'শুধু assigned conversation');
+        } catch (err) { toast.error(err.message); }
+    };
+
     const togglePerm = (key) => {
         setForm(f => ({
             ...f,
@@ -283,6 +291,37 @@ export default function Agents() {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Message access mode — assigned নাকি পুরো channel */}
+                            <div style={{ marginBottom: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+                                <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 8 }}>
+                                    💬 Message Access:
+                                </div>
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    <button
+                                        onClick={() => updateAccessMode(agent, 'assigned')}
+                                        style={{
+                                            flex: 1, padding: '8px 10px', borderRadius: 8, fontSize: 11, cursor: 'pointer', textAlign: 'left',
+                                            border: `1px solid ${(agent.accessMode || 'assigned') === 'assigned' ? 'var(--accent)' : 'var(--border)'}`,
+                                            background: (agent.accessMode || 'assigned') === 'assigned' ? 'var(--accent-dim)' : 'transparent',
+                                            color: (agent.accessMode || 'assigned') === 'assigned' ? 'var(--accent-2)' : 'var(--text-3)',
+                                        }}>
+                                        {(agent.accessMode || 'assigned') === 'assigned' ? '◉' : '○'} শুধু assigned
+                                        <div style={{ fontSize: 9, opacity: 0.8, marginTop: 2 }}>admin যা assign করবে</div>
+                                    </button>
+                                    <button
+                                        onClick={() => updateAccessMode(agent, 'channel')}
+                                        style={{
+                                            flex: 1, padding: '8px 10px', borderRadius: 8, fontSize: 11, cursor: 'pointer', textAlign: 'left',
+                                            border: `1px solid ${agent.accessMode === 'channel' ? 'var(--accent)' : 'var(--border)'}`,
+                                            background: agent.accessMode === 'channel' ? 'var(--accent-dim)' : 'transparent',
+                                            color: agent.accessMode === 'channel' ? 'var(--accent-2)' : 'var(--text-3)',
+                                        }}>
+                                        {agent.accessMode === 'channel' ? '◉' : '○'} পুরো channel
+                                        <div style={{ fontSize: 9, opacity: 0.8, marginTop: 2 }}>channel এর সব message</div>
+                                    </button>
+                                </div>
+                            </div>
 
                             <div style={{ display: 'flex', gap: 8 }}>
                                 {agent.inviteStatus !== 'accepted' && (
