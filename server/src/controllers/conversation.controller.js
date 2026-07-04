@@ -144,7 +144,10 @@ exports.getConversation = async (req, res) => {
 
         const bubbles = [];
         for (const m of messages) {
-            if (m.customerMessage && m.customerMessage !== '[Agent initiated]') {
+            // customer এর আসল message (placeholder skip করো)
+            if (m.customerMessage &&
+                m.customerMessage !== '[Agent initiated]' &&
+                m.customerMessage !== '[Broadcast]') {
                 bubbles.push({
                     _id: m._id + '_in',
                     from: 'customer',
@@ -154,9 +157,11 @@ exports.getConversation = async (req, res) => {
                 });
             }
             if (m.finalReply) {
+                // broadcast/template হলে আলাদা label
+                const isBroadcast = m.humanRepliedBy?.name?.startsWith('📢') || m.humanRepliedBy?.name?.startsWith('📋');
                 bubbles.push({
                     _id: m._id + '_out',
-                    from: m.status === 'human_replied' ? 'human' : 'ai',
+                    from: isBroadcast ? 'broadcast' : (m.status === 'human_replied' ? 'human' : 'ai'),
                     text: m.finalReply,
                     repliedBy: m.humanRepliedBy?.name || (m.status === 'human_replied' ? 'Agent' : 'AI'),
                     createdAt: m.repliedAt || m.createdAt,

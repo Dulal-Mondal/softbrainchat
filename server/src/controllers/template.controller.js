@@ -1,6 +1,7 @@
 const MetaChannel = require('../models/MetaChannel.model');
 const Contact = require('../models/Contact.model');
 const Broadcast = require('../models/Broadcast.model');
+const MetaMessage = require('../models/MetaMessage.model');   // inbox record এর জন্য
 const { getTemplates, sendTemplate } = require('../services/templateApi.service');
 const { emitToUser } = require('../config/socket');
 
@@ -53,7 +54,7 @@ exports.getChannelTemplates = async (req, res) => {
 exports.sendTemplateBroadcast = async (req, res) => {
     try {
         const ctx = await resolveContext(req.user);
-        const { name, channelId, targetTag, targetTags, templateName, language, variableMapping } = req.body;
+        const { name, channelId, targetTag, targetTags, templateName, language, variableMapping, templateBody } = req.body;
 
         if (!templateName) return res.status(400).json({ message: 'Template select করুন' });
 
@@ -89,7 +90,7 @@ exports.sendTemplateBroadcast = async (req, res) => {
         res.json({ success: true, broadcast });
 
         processTemplateBroadcast(broadcast, contacts, channel, {
-            templateName, language, variableMapping: variableMapping || {},
+            templateName, language, variableMapping: variableMapping || {}, templateBody,
         }, ctx.ownerId);
 
     } catch (err) {
@@ -99,7 +100,7 @@ exports.sendTemplateBroadcast = async (req, res) => {
 
 // ── Background template sender ───────────────────────────────
 async function processTemplateBroadcast(broadcast, contacts, channel, opts, userId) {
-    const { templateName, language, variableMapping } = opts;
+    const { templateName, language, variableMapping, templateBody } = opts;
     const DELAY_MS = 150;
 
     const varKeys = Object.keys(variableMapping).sort((a, b) => Number(a) - Number(b));
@@ -122,6 +123,39 @@ async function processTemplateBroadcast(broadcast, contacts, channel, opts, user
                 variables,
             });
             broadcast.sentCount += 1;
+
+            // ── Inbox এ record — পাঠানো template message দেখাবে ──
+            try {
+                // template এর আসল text বানাও (variable বসিয়ে)
+                let displayText = templateBody || `[Template: ${templateName}]`;
+                variables.forEach((v, i) => {
+                    displayText = displayText.replace(new RegExp(`\\{\\{${i + 1}\\}\\}`, 'g'), v);
+                });
+
+                await MetaMessage.create({
+                    userId,
+                    channelId: channel._id,
+                    platform: 'whatsapp',
+                    senderId: contact.senderId,
+                    senderName: contact.name || 'Customer',
+                    customerMessage: '[Broadcast]',
+                    messageType: 'text',
+                    metaMessageId: `tpl-${broadcast._id}-${contact.senderId}-${Date.now()}`,
+                    finalReply: displayText,
+                    status: 'human_replied',
+                    replySent: true,
+                    repliedAt: new Date(),
+                    humanRepliedBy: {
+                        name: `📋 Template: ${templateName}`,
+                        repliedAt: new Date(),
+                    },
+                });
+
+                await Contact.updateOne(
+                    { userId, senderId: contact.senderId, channelId: channel._id },
+                    { $set: { lastMessageAt: new Date(), lastMessageText: `📋 ${displayText.slice(0, 50)}` } }
+                );
+            } catch (recErr) { /* record fail হলেও চলবে */ }
         } catch (err) {
             broadcast.failedCount += 1;
             broadcast.errors.push({

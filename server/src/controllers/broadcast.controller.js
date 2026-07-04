@@ -1,6 +1,7 @@
 const Broadcast = require('../models/Broadcast.model');
 const Contact = require('../models/Contact.model');
 const MetaChannel = require('../models/MetaChannel.model');
+const MetaMessage = require('../models/MetaMessage.model');   // inbox record এর জন্য
 const { sendReply } = require('../services/metaApi.service');
 const { emitToUser } = require('../config/socket');
 
@@ -125,6 +126,36 @@ async function processBroadcast(broadcast, contacts, channel, userId) {
                 });
             }
             broadcast.sentCount += 1;
+
+            // ── Inbox এ record তৈরি করো (customer conversation এ দেখাবে) ──
+            try {
+                const sentText = broadcast.message + (broadcast.imageUrl ? `\n${broadcast.imageUrl}` : '');
+                await MetaMessage.create({
+                    userId,
+                    channelId: channel._id,
+                    platform: channel.platform,
+                    senderId: contact.senderId,
+                    senderName: contact.name || 'Customer',
+                    customerMessage: '[Broadcast]',
+                    messageType: broadcast.imageUrl ? 'image' : 'text',
+                    metaMessageId: `broadcast-${broadcast._id}-${contact.senderId}-${Date.now()}`,
+                    finalReply: sentText,
+                    status: 'human_replied',
+                    replySent: true,
+                    repliedAt: new Date(),
+                    humanRepliedBy: {
+                        name: `📢 Broadcast: ${broadcast.name}`,
+                        repliedAt: new Date(),
+                    },
+                });
+
+                // Contact এর lastMessage update করো (inbox এ উপরে আসবে)
+                await Contact.updateOne(
+                    { userId, senderId: contact.senderId, channelId: channel._id },
+                    { $set: { lastMessageAt: new Date(), lastMessageText: `📢 ${broadcast.message.slice(0, 50)}` } }
+                );
+            } catch (recErr) { /* record fail হলেও broadcast চলবে */ }
+
         } catch (err) {
             broadcast.failedCount += 1;
             broadcast.errors.push({
