@@ -337,4 +337,33 @@ exports.updateCustomData = async (req, res) => {
     }
 };
 
+// ── GET /api/contacts/leads ──────────────────────────────────
+// শুধু lead-analyzed contact (filter: stage, minScore, tag, channelId)
+exports.getLeads = async (req, res) => {
+    try {
+        const { stage, minScore, tag, channelId } = req.query;
+        const ctx = await resolveContext(req.user);
+
+        let filter = { userId: ctx.ownerId, 'lead.analyzedAt': { $ne: null } };
+
+        // agent access (channel-ভিত্তিক)
+        filter = buildAgentFilter(ctx, filter);
+
+        if (stage) filter['lead.stage'] = stage;
+        if (minScore) filter['lead.score'] = { $gte: Number(minScore) };
+        if (tag) filter.tags = tag;
+        if (channelId) filter.channelId = channelId;
+
+        const leads = await Contact.find(filter)
+            .populate('assignedTo', 'name email')
+            .populate('channelId', 'name platform')
+            .sort({ 'lead.score': -1, lastMessageAt: -1 })
+            .limit(1000);
+
+        res.json({ success: true, leads });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 module.exports = exports;

@@ -422,6 +422,12 @@ exports.webhookReceive = async (req, res) => {
 
         emitToUser(channel.userId._id, 'meta:message_updated', { message: metaMsg });
 
+        // ── Background AI lead collection ──
+        // কিছু message জমলে auto lead analyze করো (প্রতি ৩ message এ একবার)
+        try {
+            await maybeCollectLead(channel.userId._id, msgData.senderId, channel._id);
+        } catch (e) { /* lead collect skip */ }
+
         if (answer.includes('Order Confirmed')) {
             emitToUser(channel.userId._id, 'order:new', {});
         }
@@ -430,6 +436,66 @@ exports.webhookReceive = async (req, res) => {
         console.error('Webhook receive error:', err.message);
     }
 };
+
+// ── Background AI lead collection ────────────────────────────
+// যথেষ্ট conversation জমলে auto lead analyze করে Contact.lead এ save করে
+async function maybeCollectLead(ownerId, senderId, channelId) {
+    let Contact = null, MetaMessage = null, analyzeLeadFromConversation = null;
+    try {
+        Contact = require('../models/Contact.model');
+        MetaMessage = require('../models/MetaMessage.model');
+        ({ analyzeLeadFromConversation } = require('../services/leadQualification.service'));
+    } catch (e) { return; }   // CRM/service না থাকলে skip
+
+    const contact = await Contact.findOne({ userId: ownerId, senderId, channelId });
+    if (!contact) return;
+
+    // কত customer message আছে গণনা করো
+    const msgs = await MetaMessage.find({ userId: ownerId, senderId, channelId })
+        .sort({ createdAt: 1 }).limit(60);
+
+    const customerMsgCount = msgs.filter(m =>
+        m.customerMessage && m.customerMessage !== '[Agent initiated]'
+    ).length;
+
+    // অন্তত ৩টা customer message লাগবে analyze করতে
+    if (customerMsgCount < 3) return;
+
+    // আগে analyze করা থাকলে — শুধু নতুন message এলে আবার (প্রতি ৩ নতুন এ)
+    const lastAnalyzed = contact.lead?.analyzedAt;
+    if (lastAnalyzed) {
+        const newSince = msgs.filter(m =>
+            m.customerMessage && m.customerMessage !== '[Agent initiated]' &&
+            new Date(m.createdAt) > new Date(lastAnalyzed)
+        ).length;
+        if (newSince < 3) return;   // যথেষ্ট নতুন message নেই
+    }
+
+    // conversation → bubble
+    const bubbles = [];
+    for (const m of msgs) {
+        if (m.customerMessage && m.customerMessage !== '[Agent initiated]') {
+            bubbles.push({ from: 'customer', text: m.customerMessage });
+        }
+        if (m.finalReply) bubbles.push({ from: 'ai', text: m.finalReply });
+    }
+
+    const result = await analyzeLeadFromConversation(bubbles);
+    if (!result) return;
+
+    contact.lead.problem = result.problem;
+    contact.lead.urgency = result.urgency;
+    contact.lead.budget = result.budget;
+    contact.lead.interest = result.interest;
+    contact.lead.summary = result.summary;
+    contact.lead.score = result.score;
+    contact.lead.analyzedAt = new Date();
+    // stage auto — score অনুযায়ী (যদি এখনো new থাকে)
+    if (!contact.lead.stage || contact.lead.stage === 'new') {
+        contact.lead.stage = result.score >= 70 ? 'qualified' : 'contacted';
+    }
+    await contact.save();
+}
 
 // ── Vision answer থেকে product info extract করো ──────────────
 function extractProductFromVisionAnswer(text) {

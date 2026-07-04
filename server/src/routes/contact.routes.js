@@ -106,7 +106,7 @@ router.use(authMW);
 // ⚠️ specific route আগে, dynamic (:contactId) পরে
 router.get('/meta/tags', ctrl.getAllTags);
 router.post('/import', importCtrl.importContacts);
-
+router.get('/leads', contactCtrl.getLeads);
 router.get('/', ctrl.getContacts);
 router.get('/:contactId', ctrl.getContact);
 router.patch('/:contactId', ctrl.updateContact);

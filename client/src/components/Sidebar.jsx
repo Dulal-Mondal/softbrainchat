@@ -40,6 +40,7 @@ const NAV_SECTIONS = [
             { to: '/agents', icon: '👥', label: 'Team', perm: 'ownerOnly' },
             { to: '/settings', icon: '🔧', label: 'Settings', perm: null },
             { to: '/billing', icon: '💳', label: 'Billing', perm: 'ownerOnly' },
+            { to: '/leads', icon: '🎯', label: 'Leads', perm: 'crm' },
         ],
     },
 ];
