@@ -74,6 +74,49 @@ export default function CrmTable() {
         } catch (err) { toast.error(err.message); }
     };
 
+    // ── CSV export (Excel এও খোলে) ──
+    const exportCSV = () => {
+        if (contacts.length === 0) { toast.error('কোনো contact নেই'); return; }
+
+        // header: standard + lead + custom columns
+        const headers = ['Name', 'Phone', 'Platform', 'Stage', 'Tags', 'Lead Score', 'Interest', 'Budget', 'Notes'];
+        columns.forEach(col => headers.push(col.label));
+        headers.push('Last Message');
+
+        // rows
+        const rows = contacts.map(c => {
+            const row = [
+                c.name || '',
+                c.phone || c.senderId || '',
+                c.platform || '',
+                c.lead?.stage || '',
+                (c.tags || []).join('; '),
+                c.lead?.score ?? '',
+                c.lead?.interest || '',
+                c.lead?.budget || '',
+                (c.notes || '').replace(/[\r\n]+/g, ' '),
+            ];
+            columns.forEach(col => row.push(c.customData?.[col.key] || ''));
+            row.push((c.lastMessageText || '').replace(/[\r\n]+/g, ' '));
+            // CSV escape — comma/quote থাকলে quote এ মোড়াও
+            return row.map(v => {
+                const s = String(v);
+                return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+            }).join(',');
+        });
+
+        // BOM যোগ করি — Excel এ বাংলা ঠিক দেখাতে
+        const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `contacts-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success(`✅ ${contacts.length}টি contact export হলো`);
+    };
+
     const filtered = contacts.filter(c =>
         !search ||
         c.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -95,6 +138,7 @@ export default function CrmTable() {
                     <p style={{ color: 'var(--text-2)', fontSize: 13, marginTop: 4 }}>সব customer — নাম এ click করে conversation দেখুন</p>
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
+                    <button onClick={exportCSV} className="btn btn-outline btn-sm">📥 Export CSV</button>
                     <Link to="/crm-setup" className="btn btn-outline btn-sm">⚙️ Setup Columns</Link>
                     <Link to="/dashboard" className="btn btn-outline btn-sm">← Dashboard</Link>
                 </div>

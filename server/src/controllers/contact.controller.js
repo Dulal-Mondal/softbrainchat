@@ -2,29 +2,48 @@ const Contact = require('../models/Contact.model');
 const Agent = require('../models/Agent.model');
 const { emitToUser } = require('../config/socket');
 
-// agent context helper — না থাকলেও crash করবে না
-let resolveContext = async (user) => ({ isAgent: false, ownerId: user._id, agentUserId: null });
+// agent context helper
+let resolveContext = async (user) => ({ isAgent: false, ownerId: user._id, agentUserId: null, allowedChannels: [], accessMode: 'all' });
 try { ({ resolveContext } = require('../utils/agentContext')); } catch (e) { /* helper not installed */ }
 
+// ── Agent এর contact filter তৈরি করো ─────────────────────────
+// agent হলে: allowed channel এর সব contact (import করা সহ)
+//            accessMode='assigned' হলে শুধু assigned
+function buildAgentFilter(ctx, baseFilter) {
+    if (!ctx.isAgent) return baseFilter;
+
+    // allowed channel এর contact (খালি হলে সব channel)
+    if (ctx.allowedChannels?.length) {
+        baseFilter.channelId = { $in: ctx.allowedChannels };
+    }
+
+    // accessMode = 'assigned' → শুধু assigned contact
+    if (ctx.accessMode === 'assigned') {
+        baseFilter.assignedTo = ctx.agentUserId;
+    }
+    // accessMode = 'channel' → channel এর সব (উপরে channelId filter)
+
+    return baseFilter;
+}
+
 // ── GET /api/contacts ────────────────────────────────────────
-// owner হলে: সব contact (filter সহ)
-// agent হলে: শুধু তার assigned contact (owner এর data থেকে)
 exports.getContacts = async (req, res) => {
     try {
-        const { assignedTo, tag, stage, search } = req.query;
+        const { assignedTo, tag, stage, search, channelId } = req.query;
         const ctx = await resolveContext(req.user);
 
-        // owner এর data (agent হলেও owner এর _id)
-        const filter = { userId: ctx.ownerId };
+        let filter = { userId: ctx.ownerId };
 
-        // ── Agent হলে — শুধু নিজের assigned contact ──
-        if (ctx.isAgent) {
-            filter.assignedTo = ctx.agentUserId;
-        } else if (assignedTo) {
-            // owner filter করতে পারে
-            filter.assignedTo = assignedTo === 'unassigned' ? null : assignedTo;
+        // owner filter করতে পারে
+        if (!ctx.isAgent) {
+            if (assignedTo) filter.assignedTo = assignedTo === 'unassigned' ? null : assignedTo;
         }
 
+        // agent access filter (channel-ভিত্তিক)
+        filter = buildAgentFilter(ctx, filter);
+
+        // channel filter (dropdown থেকে)
+        if (channelId) filter.channelId = channelId;
         if (tag) filter.tags = tag;
         if (stage) filter['lead.stage'] = stage;
         if (search) {
@@ -38,7 +57,7 @@ exports.getContacts = async (req, res) => {
         const contacts = await Contact.find(filter)
             .populate('assignedTo', 'name email')
             .sort({ lastMessageAt: -1 })
-            .limit(200);
+            .limit(500);
 
         res.json({ success: true, contacts });
     } catch (err) {
@@ -54,9 +73,12 @@ exports.getContact = async (req, res) => {
             .populate('assignedTo', 'name email');
         if (!contact) return res.status(404).json({ message: 'Contact not found' });
 
-        // agent হলে — শুধু নিজের assigned দেখতে পারবে
-        if (ctx.isAgent && String(contact.assignedTo?._id || contact.assignedTo) !== String(ctx.agentUserId)) {
-            return res.status(403).json({ message: 'এই contact আপনাকে assign করা হয়নি' });
+        // agent হলে — এই contact এর channel access আছে কিনা
+        if (ctx.isAgent && ctx.allowedChannels?.length) {
+            const allowed = ctx.allowedChannels.map(String);
+            if (!allowed.includes(String(contact.channelId))) {
+                return res.status(403).json({ message: 'এই contact এ আপনার access নেই' });
+            }
         }
 
         res.json({ success: true, contact });
@@ -87,16 +109,15 @@ exports.updateContact = async (req, res) => {
 };
 
 // ── POST /api/contacts/:contactId/assign ─────────────────────
-// ⚠️ শুধু owner assign করতে পারবে (agent নয়)
+// শুধু owner assign করতে পারবে
 exports.assignContact = async (req, res) => {
     try {
         const ctx = await resolveContext(req.user);
-        // agent conversation assign করতে পারবে না
         if (ctx.isAgent) {
             return res.status(403).json({ message: 'শুধু admin conversation assign করতে পারে' });
         }
 
-        const { agentId } = req.body;   // null হলে unassign
+        const { agentId } = req.body;
 
         const contact = await Contact.findOne({ _id: req.params.contactId, userId: req.user._id });
         if (!contact) return res.status(404).json({ message: 'Contact not found' });
@@ -146,6 +167,7 @@ exports.updateStage = async (req, res) => {
 };
 
 // ── POST /api/contacts/:contactId/tags ───────────────────────
+// admin ও agent দুজনেই tag দিতে পারবে
 exports.addTag = async (req, res) => {
     try {
         const ctx = await resolveContext(req.user);
@@ -183,10 +205,16 @@ exports.removeTag = async (req, res) => {
 };
 
 // ── GET /api/contacts/meta/tags ──────────────────────────────
+// admin ও agent — owner এর সব tag (agent allowed channel এর)
 exports.getAllTags = async (req, res) => {
     try {
         const ctx = await resolveContext(req.user);
-        const tags = await Contact.distinct('tags', { userId: ctx.ownerId });
+        let filter = { userId: ctx.ownerId };
+        // agent হলে allowed channel এর contact এর tag
+        if (ctx.isAgent && ctx.allowedChannels?.length) {
+            filter.channelId = { $in: ctx.allowedChannels };
+        }
+        const tags = await Contact.distinct('tags', filter);
         res.json({ success: true, tags: tags.filter(Boolean) });
     } catch (err) {
         res.status(500).json({ message: err.message });
