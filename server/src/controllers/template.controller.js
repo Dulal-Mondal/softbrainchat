@@ -2,7 +2,7 @@ const MetaChannel = require('../models/MetaChannel.model');
 const Contact = require('../models/Contact.model');
 const Broadcast = require('../models/Broadcast.model');
 const MetaMessage = require('../models/MetaMessage.model');   // inbox record এর জন্য
-const { getTemplates, sendTemplate } = require('../services/templateApi.service');
+const { getTemplates, getApprovedTemplates, createTemplate, deleteTemplate, sendTemplate } = require('../services/templateApi.service');
 const { emitToUser } = require('../config/socket');
 
 // agent context — না থাকলেও crash করবে না
@@ -42,7 +42,7 @@ exports.getChannelTemplates = async (req, res) => {
             return res.status(400).json({ message: 'এই channel এ WABA ID সেট করা নেই। Channel edit করে WABA ID যোগ করুন।' });
         }
 
-        const templates = await getTemplates({ wabaId: channel.wabaId, accessToken: channel.accessToken });
+        const templates = await getApprovedTemplates({ wabaId: channel.wabaId, accessToken: channel.accessToken });
         res.json({ success: true, templates });
     } catch (err) {
         const detail = err.response?.data?.error?.message || err.message;
@@ -188,5 +188,129 @@ async function processTemplateBroadcast(broadcast, contacts, channel, opts, user
         total: broadcast.totalRecipients,
     });
 }
+
+// ── GET /api/templates/:channelId/all ────────────────────────
+// সব template + status (PENDING/APPROVED/REJECTED) — status page এর জন্য
+exports.getAllChannelTemplates = async (req, res) => {
+    try {
+        const ctx = await resolveContext(req.user);
+        if (!checkChannelAccess(ctx, req.params.channelId)) {
+            return res.status(403).json({ message: 'এই channel এ আপনার access নেই' });
+        }
+        const channel = await MetaChannel.findOne({ _id: req.params.channelId, userId: ctx.ownerId });
+        if (!channel) return res.status(404).json({ message: 'Channel not found' });
+        if (!channel.wabaId) {
+            return res.status(400).json({ message: 'এই channel এ WABA ID সেট করা নেই।' });
+        }
+
+        const templates = await getTemplates({ wabaId: channel.wabaId, accessToken: channel.accessToken });
+        res.json({ success: true, templates });
+    } catch (err) {
+        const detail = err.response?.data?.error?.message || err.message;
+        res.status(500).json({ message: detail });
+    }
+};
+
+// ── POST /api/templates/:channelId/create ────────────────────
+// নতুন template Meta তে submit করো
+exports.createChannelTemplate = async (req, res) => {
+    try {
+        const ctx = await resolveContext(req.user);
+        if (!checkChannelAccess(ctx, req.params.channelId)) {
+            return res.status(403).json({ message: 'এই channel এ আপনার access নেই' });
+        }
+        const channel = await MetaChannel.findOne({ _id: req.params.channelId, userId: ctx.ownerId });
+        if (!channel) return res.status(404).json({ message: 'Channel not found' });
+        if (!channel.wabaId) {
+            return res.status(400).json({ message: 'এই channel এ WABA ID সেট করা নেই।' });
+        }
+
+        const { name, category, language, headerText, bodyText, footerText, buttons } = req.body;
+
+        if (!name?.trim() || !bodyText?.trim()) {
+            return res.status(400).json({ message: 'নাম এবং body text দরকার' });
+        }
+
+        // Meta এর নিয়ম: name lowercase + underscore
+        const cleanName = name.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+
+        // components তৈরি করো
+        const components = [];
+
+        // Header (optional — text)
+        if (headerText?.trim()) {
+            components.push({ type: 'HEADER', format: 'TEXT', text: headerText.trim() });
+        }
+
+        // Body (required)
+        const bodyComp = { type: 'BODY', text: bodyText.trim() };
+        // body তে variable থাকলে example দিতে হয় (Meta চায়)
+        const varCount = new Set((bodyText.match(/\{\{\d+\}\}/g) || [])).size;
+        if (varCount > 0) {
+            bodyComp.example = {
+                body_text: [Array.from({ length: varCount }, (_, i) => `example${i + 1}`)],
+            };
+        }
+        components.push(bodyComp);
+
+        // Footer (optional)
+        if (footerText?.trim()) {
+            components.push({ type: 'FOOTER', text: footerText.trim() });
+        }
+
+        // Buttons (optional) — [{type, text, url/phone}]
+        if (Array.isArray(buttons) && buttons.length > 0) {
+            const btnComps = buttons.filter(b => b.text?.trim()).map(b => {
+                if (b.type === 'URL') return { type: 'URL', text: b.text, url: b.url || 'https://example.com' };
+                if (b.type === 'PHONE_NUMBER') return { type: 'PHONE_NUMBER', text: b.text, phone_number: b.phone || '' };
+                return { type: 'QUICK_REPLY', text: b.text };
+            });
+            if (btnComps.length) components.push({ type: 'BUTTONS', buttons: btnComps });
+        }
+
+        const result = await createTemplate({
+            wabaId: channel.wabaId,
+            accessToken: channel.accessToken,
+            name: cleanName,
+            category: category || 'MARKETING',
+            language: language || 'en',
+            components,
+        });
+
+        res.status(201).json({
+            success: true,
+            template: result,
+            message: 'Template submit করা হয়েছে! Meta review করছে (কয়েক মিনিট - কয়েক ঘণ্টা)।',
+        });
+    } catch (err) {
+        const detail = err.response?.data?.error?.error_user_msg
+            || err.response?.data?.error?.message
+            || err.message;
+        res.status(400).json({ message: detail });
+    }
+};
+
+// ── DELETE /api/templates/:channelId/:templateName ───────────
+exports.deleteChannelTemplate = async (req, res) => {
+    try {
+        const ctx = await resolveContext(req.user);
+        // agent delete করতে পারবে না — শুধু owner
+        if (ctx.isAgent) {
+            return res.status(403).json({ message: 'শুধু admin template মুছতে পারে' });
+        }
+        const channel = await MetaChannel.findOne({ _id: req.params.channelId, userId: ctx.ownerId });
+        if (!channel) return res.status(404).json({ message: 'Channel not found' });
+
+        await deleteTemplate({
+            wabaId: channel.wabaId,
+            accessToken: channel.accessToken,
+            name: req.params.templateName,
+        });
+        res.json({ success: true, message: 'Template মুছে ফেলা হয়েছে' });
+    } catch (err) {
+        const detail = err.response?.data?.error?.message || err.message;
+        res.status(500).json({ message: detail });
+    }
+};
 
 module.exports = exports;

@@ -41,6 +41,7 @@ const NAV_SECTIONS = [
             { to: '/settings', icon: '🔧', label: 'Settings', perm: null },
             { to: '/billing', icon: '💳', label: 'Billing', perm: 'ownerOnly' },
             { to: '/leads', icon: '🎯', label: 'Leads', perm: 'crm' },
+            { to: '/templates', icon: '📋', label: 'Templates', perm: 'broadcast' },
         ],
     },
 ];

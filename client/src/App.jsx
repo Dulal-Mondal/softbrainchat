@@ -366,6 +366,7 @@ import AcceptInvite from './pages/AcceptInvite';
 import Subscribe from './pages/Subscribe';
 import SubscriptionAdmin from './pages/SubscriptionAdmin';
 import Leads from './pages/Leads';
+import Templates from './pages/Templates';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Chat = lazy(() => import('./pages/Chat'));
@@ -436,6 +437,7 @@ export default function App() {
                     <Route path="/subscribe" element={<Subscribe />} />
                     <Route path="/subscription-admin" element={<SubscriptionAdmin />} />
                     <Route path="/leads" element={<Leads />} />
+                    <Route path="/templates" element={<Templates />} />
                   </Route>
                 </Route>
 
