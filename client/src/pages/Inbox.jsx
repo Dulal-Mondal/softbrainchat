@@ -23,6 +23,13 @@ export default function Inbox() {
     const [reply, setReply] = useState('');
     const [sending, setSending] = useState(false);
     const [imageFile, setImageFile] = useState(null);
+
+    // ── Voice recording ──
+    const [recording, setRecording] = useState(false);
+    const [audioBlob, setAudioBlob] = useState(null);   // record করা voice (preview)
+    const [audioUrl, setAudioUrl] = useState(null);     // preview URL
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
     const scrollRef = useRef(null);
 
     // ── Load conversation list ──
@@ -68,9 +75,54 @@ export default function Inbox() {
         if (active) loadConversation(active.senderId, active.channelId);
     });
 
+    // ── Voice recording ──
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const recorder = new MediaRecorder(stream);
+            audioChunksRef.current = [];
+
+            recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) audioChunksRef.current.push(e.data);
+            };
+            recorder.onstop = () => {
+                const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                setAudioBlob(blob);
+                setAudioUrl(URL.createObjectURL(blob));
+                stream.getTracks().forEach(t => t.stop());   // mic ছাড়ো
+            };
+
+            recorder.start();
+            mediaRecorderRef.current = recorder;
+            setRecording(true);
+        } catch (err) {
+            toast.error('Microphone access দরকার। Browser এ permission দিন।');
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && recording) {
+            mediaRecorderRef.current.stop();
+            setRecording(false);
+        }
+    };
+
+    const cancelVoice = () => {
+        setAudioBlob(null);
+        if (audioUrl) URL.revokeObjectURL(audioUrl);
+        setAudioUrl(null);
+    };
+
+    const blobToBase64 = (blob) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+
     // ── Send reply ──
     const handleSend = async () => {
-        if (!reply.trim() && !imageFile) return;
+        if (!reply.trim() && !imageFile && !audioBlob) return;
         setSending(true);
         try {
             let imageBase64 = null, imageMimeType = null;
@@ -78,10 +130,15 @@ export default function Inbox() {
                 imageBase64 = await fileToBase64(imageFile);
                 imageMimeType = imageFile.type;
             }
+            let audioBase64 = null, audioMimeType = null;
+            if (audioBlob) {
+                audioBase64 = await blobToBase64(audioBlob);
+                audioMimeType = 'audio/mpeg';
+            }
             await api.post(`/conversations/${active.senderId}/${active.channelId}/reply`, {
-                text: reply, imageBase64, imageMimeType,
+                text: reply, imageBase64, imageMimeType, audioBase64, audioMimeType,
             });
-            setReply(''); setImageFile(null);
+            setReply(''); setImageFile(null); cancelVoice();
             loadConversation(active.senderId, active.channelId);
             loadConversations();
         } catch (err) {
@@ -106,7 +163,13 @@ export default function Inbox() {
         return d.toLocaleDateString();
     };
 
-    const isImageUrl = (t) => /^https?:\/\/.*\.(jpg|jpeg|png|gif|webp)/i.test(t) || t?.includes('cloudinary');
+    const isAudioUrl = (t) => /\.(mp3|ogg|oga|webm|m4a|wav|mpeg)/i.test(t || '') || /\/voice\//.test(t || '');
+    const isImageUrl = (t) => !isAudioUrl(t) && (/^https?:\/\/.*\.(jpg|jpeg|png|gif|webp)/i.test(t) || (t?.includes('cloudinary') && !/\/voice\//.test(t)));
+    // text থেকে URL বের করো (finalReply এ text + url থাকতে পারে)
+    const extractUrl = (t) => {
+        const m = (t || '').match(/https?:\/\/[^\s]+/);
+        return m ? m[0] : t;
+    };
 
     return (
         <div style={{ height: '100vh', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
@@ -247,9 +310,11 @@ export default function Inbox() {
                                                 background: bg, color: color,
                                                 border: isBroadcast ? '1px solid var(--purple, #a78bfa)' : 'none',
                                             }}>
-                                                {isImageUrl(m.text)
-                                                    ? <img src={m.text} style={{ maxWidth: 200, borderRadius: 8 }} />
-                                                    : m.text}
+                                                {isAudioUrl(m.text)
+                                                    ? <audio controls src={extractUrl(m.text)} style={{ maxWidth: 220, height: 40 }} />
+                                                    : isImageUrl(m.text)
+                                                        ? <img src={m.text} style={{ maxWidth: 200, borderRadius: 8 }} />
+                                                        : m.text}
                                                 {m.from !== 'customer' && (
                                                     <div style={{ fontSize: 10, opacity: 0.8, marginTop: 3 }}>
                                                         {m.from === 'ai' ? '🤖 AI'
@@ -270,12 +335,38 @@ export default function Inbox() {
                                         📎 {imageFile.name} <button onClick={() => setImageFile(null)} style={{ background: 'none', border: 'none', color: 'var(--red)', cursor: 'pointer' }}>✕</button>
                                     </div>
                                 )}
+
+                                {/* Voice preview (পাঠানোর আগে শোনা) */}
+                                {audioUrl && (
+                                    <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10, padding: 8, background: 'var(--accent-dim)', borderRadius: 8 }}>
+                                        <span style={{ fontSize: 12, color: 'var(--accent-2)' }}>🎤 Voice:</span>
+                                        <audio controls src={audioUrl} style={{ height: 36, flex: 1 }} />
+                                        <button onClick={cancelVoice} style={{ background: 'none', border: 'none', color: 'var(--red)', cursor: 'pointer', fontSize: 16 }}>🗑️</button>
+                                    </div>
+                                )}
+
+                                {/* Recording indicator */}
+                                {recording && (
+                                    <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10, padding: 8, background: 'var(--red-dim)', borderRadius: 8 }}>
+                                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--red)', animation: 'pulse 1s infinite' }} />
+                                        <span style={{ fontSize: 13, color: 'var(--red)', flex: 1 }}>🎤 Recording... কথা বলুন</span>
+                                        <button onClick={stopRecording} className="btn btn-sm" style={{ background: 'var(--red)', color: '#fff' }}>⏹ Stop</button>
+                                    </div>
+                                )}
+
                                 <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
                                     <label style={{ cursor: 'pointer', fontSize: 20, padding: '6px' }}>
                                         📎
                                         <input type="file" accept="image/*" style={{ display: 'none' }}
                                             onChange={e => setImageFile(e.target.files[0])} />
                                     </label>
+                                    {/* Voice record button */}
+                                    {!recording && !audioBlob && (
+                                        <button onClick={startRecording} title="Voice record"
+                                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, padding: '6px' }}>
+                                            🎤
+                                        </button>
+                                    )}
                                     <textarea value={reply} onChange={e => setReply(e.target.value)}
                                         onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                                         placeholder={`Reply in ${contact?.platform}...`}

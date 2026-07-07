@@ -214,7 +214,7 @@ exports.webhookReceive = async (req, res) => {
             senderId: msgData.senderId,
             senderName: profile.name,
             senderProfilePic: profile.profilePic,
-            customerMessage: msgData.text || '[Image sent]',
+            customerMessage: msgData.text || (msgData.type === 'audio' ? '[Voice message]' : '[Image sent]'),
             messageType: msgData.type || 'text',
             metaMessageId: msgData.messageId,
             status: 'pending',
@@ -277,6 +277,42 @@ exports.webhookReceive = async (req, res) => {
         let answer = '';
         let sources = [];
         let cantAnswer = false;
+
+        // ════════════════════════════════════════════════════════
+        // AUDIO / VOICE MESSAGE — customer এর voice save করো
+        // ════════════════════════════════════════════════════════
+        if (msgData.type === 'audio') {
+            try {
+                let audioUrl = '';
+                const { getWhatsAppMediaUrl, downloadWhatsAppMedia } = require('../services/metaApi.service');
+
+                if (channel.platform === 'whatsapp' && msgData.mediaId) {
+                    const mediaUrl = await getWhatsAppMediaUrl(msgData.mediaId, channel.accessToken);
+                    const media = await downloadWhatsAppMedia(mediaUrl, channel.accessToken);
+                    audioUrl = await uploadBase64(media.base64, media.mimeType, 'softbrainchat/voice');
+                }
+                if ((channel.platform === 'messenger' || channel.platform === 'instagram') && msgData.audioUrl) {
+                    // Messenger/IG এর audio URL সরাসরি accessible
+                    audioUrl = msgData.audioUrl;
+                }
+
+                if (audioUrl) {
+                    metaMsg.customerMessage = audioUrl;   // inbox এ audio player দেখাবে
+                    metaMsg.messageType = 'audio';
+                    await metaMsg.save();
+                    emitToUser(channel.userId._id, 'meta:message_updated', { message: metaMsg });
+                }
+
+                // voice এ AI reply দেয় না — human কে জানাও
+                metaMsg.status = 'review_needed';
+                await metaMsg.save();
+                emitToUser(channel.userId._id, 'meta:message_updated', { message: metaMsg });
+                return;   // voice এ auto-reply skip
+            } catch (audioErr) {
+                console.error('Audio receive error:', audioErr.message);
+                return;
+            }
+        }
 
         // ════════════════════════════════════════════════════════
         // IMAGE MESSAGE — Vision + Order Flow

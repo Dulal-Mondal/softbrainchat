@@ -209,10 +209,10 @@ exports.getConversation = async (req, res) => {
 exports.sendMessage = async (req, res) => {
     try {
         const { senderId, channelId } = req.params;
-        const { text, imageBase64, imageMimeType } = req.body;
+        const { text, imageBase64, imageMimeType, audioBase64, audioMimeType } = req.body;
 
-        if (!text?.trim() && !imageBase64) {
-            return res.status(400).json({ message: 'text অথবা image দরকার' });
+        if (!text?.trim() && !imageBase64 && !audioBase64) {
+            return res.status(400).json({ message: 'text, image অথবা voice দরকার' });
         }
 
         const ctx = await resolveContext(req.user);
@@ -237,8 +237,13 @@ exports.sendMessage = async (req, res) => {
         if (!channel) return res.status(404).json({ message: 'Channel not found' });
 
         let imageUrl = '';
+        let audioUrl = '';
         if (imageBase64) {
             imageUrl = await uploadBase64(imageBase64, imageMimeType || 'image/jpeg', 'softbrainchat/sent');
+        }
+        if (audioBase64) {
+            // audio Cloudinary তে upload (resource_type video দিয়ে audio হয়)
+            audioUrl = await uploadBase64(audioBase64, audioMimeType || 'audio/mpeg', 'softbrainchat/voice');
         }
 
         const replyText = text?.trim() || '';
@@ -248,8 +253,15 @@ exports.sendMessage = async (req, res) => {
         if (imageUrl) {
             await sendReply({ platform: channel.platform, channel, recipientId: senderId, imageUrl });
         }
+        if (audioUrl) {
+            await sendReply({ platform: channel.platform, channel, recipientId: senderId, audioUrl });
+        }
 
-        const finalText = replyText + (imageUrl ? `\n${imageUrl}` : '');
+        // inbox record এ কী দেখাবে
+        let finalText = replyText;
+        if (imageUrl) finalText += `\n${imageUrl}`;
+        if (audioUrl) finalText += `\n${audioUrl}`;
+
         const msg = await MetaMessage.create({
             userId: ctx.ownerId,
             channelId,
@@ -257,7 +269,7 @@ exports.sendMessage = async (req, res) => {
             senderId,
             senderName: 'Customer',
             customerMessage: '[Agent initiated]',
-            messageType: 'text',
+            messageType: audioUrl ? 'audio' : (imageUrl ? 'image' : 'text'),
             metaMessageId: `manual-${Date.now()}`,
             finalReply: finalText,
             humanReply: finalText,
@@ -276,7 +288,7 @@ exports.sendMessage = async (req, res) => {
         emitToUser(ctx.ownerId, 'meta:message_updated', { message: msg });
         if (ctx.isAgent) emitToUser(ctx.agentUserId, 'meta:message_updated', { message: msg });
 
-        res.json({ success: true, imageUrl });
+        res.json({ success: true, imageUrl, audioUrl });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

@@ -12,14 +12,30 @@ cloudinary.config({
 const isConfigured = () =>
     !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
 
-// ── base64 image → Cloudinary তে upload → permanent URL ─────
+// ── base64 (image বা audio) → Cloudinary তে upload → permanent URL ─
 const uploadBase64 = async (base64, mimeType = 'image/jpeg', folder = 'softbrainchat/orders') => {
     if (!isConfigured()) {
-        console.warn('⚠️ Cloudinary not configured — image upload skipped');
+        console.warn('⚠️ Cloudinary not configured — upload skipped');
         return '';
     }
     try {
         const dataUri = `data:${mimeType};base64,${base64}`;
+
+        // ── audio/voice হলে আলাদা handle ──
+        // Cloudinary audio কে 'video' resource_type হিসেবে নেয়
+        const isAudio = mimeType?.startsWith('audio');
+
+        if (isAudio) {
+            const result = await cloudinary.uploader.upload(dataUri, {
+                folder,
+                resource_type: 'video',   // audio = video (Cloudinary নিয়ম)
+                // audio এ transformation নেই
+            });
+            console.log(`🎤 Audio uploaded to Cloudinary: ${result.secure_url}`);
+            return result.secure_url;
+        }
+
+        // ── image হলে (আগের মতো) ──
         const result = await cloudinary.uploader.upload(dataUri, {
             folder,
             resource_type: 'image',
@@ -33,21 +49,20 @@ const uploadBase64 = async (base64, mimeType = 'image/jpeg', folder = 'softbrain
     }
 };
 
-// ── একটা (temporary/auth) image URL → download → Cloudinary ─
-const uploadFromUrl = async (imageUrl, accessToken = '', folder = 'softbrainchat/orders') => {
+// ── একটা (temporary/auth) URL → download → Cloudinary ───────
+const uploadFromUrl = async (mediaUrl, accessToken = '', folder = 'softbrainchat/orders') => {
     if (!isConfigured()) {
         console.warn('⚠️ Cloudinary not configured — keeping original URL');
-        return imageUrl;
+        return mediaUrl;
     }
     try {
-        // auth লাগলে header সহ download করো (Meta CDN)
         const headers = accessToken ? { Authorization: `Bearer ${accessToken}`, 'User-Agent': 'Mozilla/5.0' } : {};
-        const res = await axios.get(imageUrl, { headers, responseType: 'arraybuffer', timeout: 20000 });
+        const res = await axios.get(mediaUrl, { headers, responseType: 'arraybuffer', timeout: 20000 });
         const base64 = Buffer.from(res.data).toString('base64');
         const mimeType = res.headers['content-type']?.split(';')[0] || 'image/jpeg';
         return await uploadBase64(base64, mimeType, folder);
     } catch (err) {
-        console.warn('Image download+upload failed:', err.message);
+        console.warn('Media download+upload failed:', err.message);
         return '';
     }
 };
