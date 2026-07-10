@@ -308,8 +308,10 @@ exports.deleteChannelTemplate = async (req, res) => {
         });
         res.json({ success: true, message: 'Template মুছে ফেলা হয়েছে' });
     } catch (err) {
-        const detail = err.response?.data?.error?.message || err.message;
-        res.status(500).json({ message: detail });
+        const metaErr = err.response?.data?.error;
+        const detail = metaErr?.error_user_msg || metaErr?.message || err.message;
+        console.error('Template delete error:', metaErr || err.message);
+        res.status(500).json({ message: `Delete ব্যর্থ: ${detail}` });
     }
 };
 

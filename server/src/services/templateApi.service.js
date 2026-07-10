@@ -58,7 +58,8 @@ async function createTemplate({ wabaId, accessToken, name, category, language, c
 async function deleteTemplate({ wabaId, accessToken, name }) {
     const url = `${GRAPH}/${wabaId}/message_templates`;
     const res = await axios.delete(url, {
-        params: { access_token: accessToken, name },
+        params: { name },   // name query param এ
+        headers: { Authorization: `Bearer ${accessToken}` },   // token header এ (create এর মতো)
     });
     return res.data;
 }
